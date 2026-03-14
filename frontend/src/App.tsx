@@ -244,7 +244,6 @@ const App: React.FC = () => {
               zoom={15} 
               maxZoom={22} 
               style={{ height: '100%', width: '100%' }} 
-              className="leaflet-dark"
             >
               <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name={t('map_osm')}>
@@ -252,14 +251,14 @@ const App: React.FC = () => {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
                     maxZoom={22} 
                     maxNativeZoom={19} 
+                    className="leaflet-dark"
                   />
                 </LayersControl.BaseLayer>
                 <LayersControl.BaseLayer name={t('map_sat')}>
                   <TileLayer 
-                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    attribution='&copy; Esri'
+                    url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg"
+                    attribution='&copy; swisstopo'
                     maxZoom={22}
-                    maxNativeZoom={19}
                   />
                 </LayersControl.BaseLayer>
               </LayersControl>
@@ -306,7 +305,6 @@ const App: React.FC = () => {
                 maxZoom={22} 
                 style={{ height: '100%', width: '100%' }} 
                 zoomControl={false} 
-                className="leaflet-dark"
               >
                 <LayersControl position="topright">
                   <LayersControl.BaseLayer checked name={t('map_stumm')}>
@@ -315,13 +313,14 @@ const App: React.FC = () => {
                       attribution='&copy; OSM'
                       maxZoom={22}
                       maxNativeZoom={19}
+                      className="leaflet-dark"
                     />
                   </LayersControl.BaseLayer>
                   <LayersControl.BaseLayer name={t('map_sat')}>
                     <TileLayer 
-                      url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" 
+                      url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" 
                       maxZoom={22} 
-                      maxNativeZoom={19}
+                      attribution='&copy; swisstopo'
                     />
                   </LayersControl.BaseLayer>
                 </LayersControl>

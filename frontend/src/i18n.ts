@@ -30,7 +30,7 @@ const resources = {
       "loading": "Lade Strassendaten von OpenStreetMap...",
       "map_stumm": "Karte (Stumm)",
       "map_osm": "Karte (OSM)",
-      "map_sat": "Satellit (Esri)",
+      "map_sat": "Satellit (Swisstopo)",
       "rel_1_1_0_title": "Version 1.1.0",
       "rel_1_1_0_items": [
         "🌍 **Zweisprachigkeit**: Die App ist jetzt auf Deutsch und Englisch verfügbar.",
@@ -74,7 +74,7 @@ const resources = {
       "loading": "Loading street data from OpenStreetMap...",
       "map_stumm": "Map (Mute)",
       "map_osm": "Map (OSM)",
-      "map_sat": "Satellite (Esri)",
+      "map_sat": "Satellite (Swisstopo)",
       "rel_1_1_0_title": "Version 1.1.0",
       "rel_1_1_0_items": [
         "🌍 **Multi-language**: The app is now available in German and English.",

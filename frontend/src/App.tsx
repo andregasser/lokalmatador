@@ -30,7 +30,8 @@ import {
   Compass,
   Medal,
   ShieldAlert,
-  User as UserIcon
+  User as UserIcon,
+  Timer
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -127,6 +128,7 @@ const App: React.FC = () => {
     }
 
     const loadStreets = async () => {
+      setLoading(true);
       try {
         const data = await fetchBassersdorfStreets();
         setStreets(data);
@@ -197,9 +199,7 @@ const App: React.FC = () => {
       .filter(s => s.name !== correct.name)
       .sort(() => 0.5 - Math.random())
       .slice(0, 3);
-    
     const allOptions = [correct.name, ...distractors.map(s => s.name)].sort(() => 0.5 - Math.random());
-    
     setCurrentStreet(correct);
     setOptions(allOptions);
     setTotalQuestions(prev => prev + 1);
@@ -209,21 +209,16 @@ const App: React.FC = () => {
   const handleAnswer = (option: string) => {
     setIsTimerActive(false);
     if (timerRef.current) clearInterval(timerRef.current);
-
     const isCorrect = currentStreet?.name === option;
     const responseTime = QUESTION_TIME_LIMIT - timeLeft;
-    
     if (isCorrect && responseTime < 2) unlockAchievement('speed_demon');
-
     const newStreak = isCorrect ? streak + 1 : 0;
     setStreak(newStreak);
     if (newStreak >= 7) unlockAchievement('on_fire_7');
-
     let multiplier = 1;
     if (newStreak >= 10) multiplier = 3;
     else if (newStreak >= 5) multiplier = 2;
     else if (newStreak >= 3) multiplier = 1.5;
-
     let discoveryBonus = 0;
     if (isCorrect && currentStreet && !knownStreetIds.includes(currentStreet.id)) {
       discoveryBonus = 1000;
@@ -232,11 +227,9 @@ const App: React.FC = () => {
       setKnownStreetIds(updatedKnown);
       localStorage.setItem(`known_streets_${user}`, JSON.stringify(updatedKnown));
     }
-
     const timeBonus = isCorrect ? Math.floor(timeLeft * 100) : 0;
     const basePoints = isCorrect ? 500 : 0;
     const roundPoints = Math.floor((basePoints + timeBonus) * multiplier) + discoveryBonus;
-
     if (isCorrect) {
       setScore(prev => prev + roundPoints);
       setCorrectCount(prev => prev + 1);
@@ -244,26 +237,19 @@ const App: React.FC = () => {
     } else {
       setFeedback(option === "" ? "Zeit abgelaufen!" : t('wrong', { name: currentStreet?.name }));
     }
-
     if (totalQuestions >= 10) {
       const finalCorrectCount = isCorrect ? correctCount + 1 : correctCount;
       const finalScore = score + roundPoints;
-      
       if (finalCorrectCount === 10) {
         unlockAchievement('perfect_round');
         confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 } });
       }
-      
       const hour = new Date().getHours();
       if (hour >= 22 || hour < 5) unlockAchievement('night_shift');
-
       const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
       leaderboard.push({ user, score: finalScore, date: new Date().toLocaleString() });
       localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-
-      const userTotalScore = leaderboard
-        .filter((entry: any) => entry.user === user)
-        .reduce((sum: number, entry: any) => sum + entry.score, 0);
+      const userTotalScore = leaderboard.filter((entry: any) => entry.user === user).reduce((sum: number, entry: any) => sum + entry.score, 0);
       if (userTotalScore >= 100000) unlockAchievement('local_hero');
     }
   };
@@ -271,58 +257,25 @@ const App: React.FC = () => {
   const changeLanguage = (lng: string) => { i18n.changeLanguage(lng); };
 
   const leaderboardData = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-  const sortedLeaderboard = leaderboardData.sort((a: any, b: any) => b.score - a.score).slice(0, 10);
-  
-  const userTotalScore = leaderboardData
-    .filter((entry: any) => entry.user === user)
-    .reduce((sum: number, entry: any) => sum + entry.score, 0);
+  const sortedLeaderboard = [...leaderboardData].sort((a: any, b: any) => b.score - a.score).slice(0, 10);
+  const userTotalScore = leaderboardData.filter((entry: any) => entry.user === user).reduce((sum: number, entry: any) => sum + entry.score, 0);
   const userRank = getRank(userTotalScore);
   const completionRate = streets.length > 0 ? Math.round((knownStreetIds.length / streets.length) * 100) : 0;
-
   const topThree = sortedLeaderboard.slice(0, 3);
   const restOfList = sortedLeaderboard.slice(3);
 
   if (!user) {
     return (
       <div className="login-container">
-        <div className="login-background-deco">
-          <div className="circle-one"></div>
-          <div className="circle-two"></div>
-        </div>
+        <div className="login-background-deco"><div className="circle-one"></div><div className="circle-two"></div></div>
         <div className="login-content">
-          <div className="login-hero">
-            <ShieldAlert size={80} color="var(--primary)" className="hero-icon-main" />
-            <h1>{t('app_title')}</h1>
-            <p className="hero-subtitle">{t('login_desc')}</p>
-          </div>
-          <form className="login-form-modern" onSubmit={handleLogin}>
-            <div className="input-wrapper-modern">
-              <UserIcon size={20} className="input-icon" />
-              <input name="username" placeholder={t('username')} required autoComplete="off" />
-            </div>
-            <button type="submit" className="login-submit-btn">
-              <span>{t('login')}</span>
-              <ChevronRight size={20} />
-            </button>
-          </form>
-          <div className="lang-select-wrapper-modern">
-            <Languages size={18} />
-            <select className="lang-select-login-modern" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
-              <option value="de">Deutsch</option>
-              <option value="en">English</option>
-            </select>
-          </div>
+          <div className="login-hero"><ShieldAlert size={80} color="var(--primary)" className="hero-icon-main" /><h1>{t('app_title')}</h1><p className="hero-subtitle">{t('login_desc')}</p></div>
+          <form className="login-form-modern" onSubmit={handleLogin}><div className="input-wrapper-modern"><UserIcon size={20} className="input-icon" /><input name="username" placeholder={t('username')} required autoComplete="off" /></div><button type="submit" className="login-submit-btn"><span>{t('login')}</span><ChevronRight size={20} /></button></form>
+          <div className="lang-select-wrapper-modern"><Languages size={18} /><select className="lang-select-login-modern" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}><option value="de">Deutsch</option><option value="en">English</option></select></div>
         </div>
       </div>
     );
   }
-
-  if (loading) return (
-    <div className="loading">
-      <div className="spinner"></div>
-      <p>{t('loading')}</p>
-    </div>
-  );
 
   return (
     <div className={`app-wrapper ${isEmergencyActive ? 'emergency-lights' : ''}`}>
@@ -332,45 +285,41 @@ const App: React.FC = () => {
             <MapIcon size={20} className="header-icon" />
             <div className="user-text-details">
               <span className="user-name"><strong>{user}</strong></span>
-              <span className="user-rank-badge" style={{ backgroundColor: userRank.color + '33', color: userRank.color }}>
-                {userRank.title}
-              </span>
+              <span className="user-rank-badge" style={{ backgroundColor: userRank.color + '33', color: userRank.color }}>{userRank.title}</span>
             </div>
           </div>
           <div className="header-divider"></div>
           <div className="completion-stats" title={`${knownStreetIds.length} von ${streets.length} Strassen bekannt`}>
-            <Compass size={16} />
-            <div className="completion-bar-wrapper">
-              <div className="completion-bar" style={{ width: `${completionRate}%` }}></div>
-            </div>
-            <span className="completion-text">{completionRate}%</span>
+            <Compass size={16} /><div className="completion-bar-wrapper"><div className="completion-bar" style={{ width: `${completionRate}%` }}></div></div><span className="completion-text">{completionRate}%</span>
           </div>
           <div className="header-divider"></div>
-          <select className="lang-select" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
-            <option value="de">DE</option>
-            <option value="en">EN</option>
-          </select>
+          <select className="lang-select" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}><option value="de">DE</option><option value="en">EN</option></select>
         </div>
         <nav>
-          <button className={mode === 'learn' ? 'active' : ''} onClick={() => setMode('learn')}>
-            <BookOpen size={18} /> {t('learn_mode')}
-          </button>
-          <button className={mode === 'compete' ? 'active' : ''} onClick={() => { setMode('compete'); setShowRulesModal(true); }}>
-            <Trophy size={18} /> {t('compete_mode')}
-          </button>
-          <button className={mode === 'leaderboard' ? 'active' : ''} onClick={() => setMode('leaderboard')}>
-            <LayoutList size={18} /> {t('leaderboard')}
-          </button>
-          <button className={mode === 'release_notes' ? 'active' : ''} onClick={() => setMode('release_notes')}>
-            <History size={18} /> {t('release_notes')}
-          </button>
-          <button onClick={handleLogout} className="logout-btn">
-            <LogOut size={18} /> {t('logout')}
-          </button>
+          <button className={mode === 'learn' ? 'active' : ''} onClick={() => setMode('learn')}><BookOpen size={18} /> {t('learn_mode')}</button>
+          <button className={mode === 'compete' ? 'active' : ''} onClick={() => { setMode('compete'); setShowRulesModal(true); }}><Trophy size={18} /> {t('compete_mode')}</button>
+          <button className={mode === 'leaderboard' ? 'active' : ''} onClick={() => setMode('leaderboard')}><LayoutList size={18} /> {t('leaderboard')}</button>
+          <button className={mode === 'release_notes' ? 'active' : ''} onClick={() => setMode('release_notes')}><History size={18} /> {t('release_notes')}</button>
+          <button onClick={handleLogout} className="logout-btn"><LogOut size={18} /> {t('logout')}</button>
         </nav>
       </header>
 
       <main>
+        {loading && (
+          <div className="map-loading-overlay">
+            <div className="spinner"></div>
+            <p>{t('loading')}</p>
+          </div>
+        )}
+
+        {!loading && streets.length === 0 && (
+          <div className="error-state">
+            <XCircle size={48} color="var(--primary)" />
+            <p>Could not load street data.</p>
+            <button onClick={() => window.location.reload()} className="back-btn">Retry</button>
+          </div>
+        )}
+
         {showRulesModal && (
           <div className="modal-overlay">
             <div className="rules-modal">
@@ -380,7 +329,7 @@ const App: React.FC = () => {
                 <div className="rule-item"><Clock size={24} color="var(--primary)" /> <div><h4>Zeitlimit</h4><p>Du hast <strong>20 Sekunden</strong> pro Frage. Beeil dich!</p></div></div>
                 <div className="rule-item"><Zap size={24} color="#4ade80" /> <div><h4>Speed-Bonus</h4><p>Bis zu <strong>1000 Extra-Punkte</strong> für schnelle Antworten.</p></div></div>
                 <div className="rule-item"><Flame size={24} color="#fb923c" /> <div><h4>Combo-Streaks</h4><p>Multiplikatoren (bis zu 3x!) bei richtigen Serien.</p></div></div>
-                <div className="rule-item"><Compass size={24} color="var(--accent)" /> <div><h4>Entdecker-Bonus</h4><p>Erhalte einmalig <strong>1000 Punkte</strong>, wenn du eine neue Strasse zum ersten Mal findest!</p></div></div>
+                <div className="rule-item"><Compass size={24} color="var(--accent)" /> <div><h4>Entdecker-Bonus</h4><p>Erhalte einmalig <strong>1000 Punkte</strong> beim ersten Mal finden!</p></div></div>
               </div>
               <button className="primary-action-btn" onClick={() => { setShowRulesModal(false); startCompetition(); }}><Play size={20} fill="currentColor" /> JETZT STARTEN</button>
             </div>
@@ -402,9 +351,7 @@ const App: React.FC = () => {
                       key={`${s.id}-${idx}-${selectedStreetId === s.id}`} positions={path} 
                       pathOptions={{
                         color: selectedStreetId === s.id ? "var(--primary)" : (knownStreetIds.includes(s.id) ? "#4ade80" : "var(--accent)"),
-                        weight: selectedStreetId === s.id ? 8 : 4,
-                        opacity: selectedStreetId === s.id ? 1 : 0.6,
-                        className: selectedStreetId === s.id ? "pulse-line" : ""
+                        weight: selectedStreetId === s.id ? 8 : 4, opacity: selectedStreetId === s.id ? 1 : 0.6, className: selectedStreetId === s.id ? "pulse-line" : ""
                       }}
                       eventHandlers={{ click: () => setSelectedStreetId(s.id) }} interactive={true}
                     >
@@ -415,13 +362,8 @@ const App: React.FC = () => {
               ))}
             </MapContainer>
             <div className="overlay-info">
-              <div className="overlay-text">
-                <BookOpen size={18} /> {t('learn_overlay')}
-              </div>
-              <div className="map-legend">
-                <div className="legend-item"><span className="dot known"></span> {t('legend_known')}</div>
-                <div className="legend-item"><span className="dot unknown"></span> {t('legend_unknown')}</div>
-              </div>
+              <div className="overlay-text"><BookOpen size={18} /> {t('learn_overlay')}</div>
+              <div className="map-legend"><div className="legend-item"><span className="dot known"></span> {t('legend_known')}</div><div className="legend-item"><span className="dot unknown"></span> {t('legend_unknown')}</div></div>
             </div>
           </div>
         )}
@@ -437,9 +379,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="timer-wrapper">
-              <div className="timer-bar-container">
-                <div className="timer-bar" style={{ width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`, backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)' }}></div>
-              </div>
+              <div className="timer-bar-container"><div className="timer-bar" style={{ width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`, backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)' }}></div></div>
               <div className="timer-text">{Math.ceil(timeLeft)}s</div>
             </div>
             <div className="map-container mini-map">
@@ -484,71 +424,83 @@ const App: React.FC = () => {
         )}
 
         {mode === 'leaderboard' && (
-          <div className="leaderboard-container">
-            <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>Hall of Fame</h2></div>
-            <div className="podium-container">
-              {topThree.map((entry, i) => {
-                const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
-                const rank = getRank(totalS);
-                const medalColors = ['#fbbf24', '#cbd5e1', '#d97706'];
-                return (
-                  <div key={i} className={`podium-card rank-${i + 1}`}>
-                    <div className="podium-medal" style={{ backgroundColor: medalColors[i] }}><Medal size={24} color="#0f172a" /></div>
-                    <span className="podium-name">{entry.user}</span>
-                    <span className="podium-rank" style={{ color: rank.color }}>{rank.title}</span>
-                    <span className="podium-score">{entry.score.toLocaleString()}</span>
-                  </div>
-                );
-              })}
+          <div className="scroll-content">
+            <div className="leaderboard-container">
+              <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>Hall of Fame</h2></div>
+              <div className="podium-container">
+                {topThree.map((entry, i) => {
+                  const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
+                  const rank = getRank(totalS);
+                  const medalColors = ['#fbbf24', '#cbd5e1', '#d97706'];
+                  return (
+                    <div key={i} className={`podium-card rank-${i + 1}`}>
+                      <div className="podium-medal" style={{ backgroundColor: medalColors[i] }}><Medal size={24} color="#0f172a" /></div>
+                      <span className="podium-name">{entry.user}</span>
+                      <span className="podium-rank" style={{ color: rank.color }}>{rank.title}</span>
+                      <span className="podium-score">{entry.score.toLocaleString()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="leaderboard-table-wrapper">
+                <table>
+                  <thead><tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr></thead>
+                  <tbody>
+                    {restOfList.map((entry: any, i: number) => {
+                      const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
+                      const rank = getRank(totalS);
+                      return (
+                        <tr key={i} className={entry.user === user ? 'highlight' : ''}>
+                          <td>#{i + 4}</td>
+                          <td><div className="leaderboard-user-cell"><span className="leaderboard-name">{entry.user}</span><span className="leaderboard-rank" style={{ color: rank.color }}>{rank.title}</span></div></td>
+                          <td className="score-cell">{entry.score.toLocaleString()}</td>
+                          <td>{entry.date}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="achievements-shelf">
+                {ACHIEVEMENTS.map(ach => {
+                  const isUnlocked = unlockedAchievements.includes(ach.id);
+                  return (
+                    <div key={ach.id} className={`achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
+                      <ach.icon size={24} color={isUnlocked ? ach.color : '#475569'} />
+                      <span className="badge-name">{ach.title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
             </div>
-            <div className="leaderboard-table-wrapper">
-              <table>
-                <thead><tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr></thead>
-                <tbody>
-                  {restOfList.map((entry: any, i: number) => {
-                    const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
-                    const rank = getRank(totalS);
-                    return (
-                      <tr key={i} className={entry.user === user ? 'highlight' : ''}>
-                        <td>#{i + 4}</td>
-                        <td><div className="leaderboard-user-cell"><span className="leaderboard-name">{entry.user}</span><span className="leaderboard-rank" style={{ color: rank.color }}>{rank.title}</span></div></td>
-                        <td className="score-cell">{entry.score.toLocaleString()}</td>
-                        <td>{entry.date}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="achievements-shelf">
-              {ACHIEVEMENTS.map(ach => {
-                const isUnlocked = unlockedAchievements.includes(ach.id);
-                return (
-                  <div key={ach.id} className={`achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
-                    <ach.icon size={24} color={isUnlocked ? ach.color : '#475569'} />
-                    <span className="badge-name">{ach.title}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
           </div>
         )}
 
         {mode === 'release_notes' && (
-          <div className="release-notes-container">
-            <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
-            <div className="release-list">
-              <div className="release-item">
-                <div className="version-badge">v1.6.0</div>
-                <h3>Hall of Fame Redesign</h3>
-                <ul>
-                  <li>🏆 **Podium View**: Die Top 3 werden jetzt prunkvoll auf dem Podium präsentiert.</li>
-                  <li>🏅 **Medaillen**: Gold, Silber und Bronze für die Champions.</li>
-                </ul>
+          <div className="scroll-content">
+            <div className="release-notes-container">
+              <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
+              <div className="release-list">
+                <div className="release-item">
+                  <div className="version-badge">v1.6.0</div>
+                  <h3>Hall of Fame Redesign</h3>
+                  <ul>
+                    <li>🏆 **Podium View**: Die Top 3 werden jetzt prunkvoll auf dem Podium präsentiert.</li>
+                    <li>🏅 **Medaillen**: Gold, Silber und Bronze für die Champions.</li>
+                  </ul>
+                </div>
+                <div className="release-item">
+                  <div className="version-badge">v1.5.0</div>
+                  <h3>Street Master System</h3>
+                  <ul>
+                    <li>🧭 **Entdecker-Bonus**: +1000 Punkte für jede zum ersten Mal erkannte Strasse.</li>
+                    <li>📈 **Gebietskenntnis**: Verfolge deinen Fortschritt im Header (0-100%).</li>
+                  </ul>
+                </div>
               </div>
+              <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
             </div>
-            <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
           </div>
         )}
       </main>

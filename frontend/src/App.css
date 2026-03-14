@@ -51,8 +51,46 @@ header {
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   font-size: 0.95rem;
+}
+
+.user-text-details {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.user-name {
+  font-size: 0.9rem;
+}
+
+.user-rank-badge {
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.leaderboard-user-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.leaderboard-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.leaderboard-rank {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .header-icon {
@@ -594,6 +632,54 @@ main {
   max-width: 800px;
   margin: 0 auto;
   overflow-y: auto;
+}
+
+.achievements-shelf {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: var(--surface);
+  padding: 25px;
+  border-radius: 24px;
+  margin-bottom: 2rem;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+}
+
+.achievement-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100px;
+  transition: all 0.3s ease;
+  cursor: help;
+}
+
+.achievement-badge.locked {
+  filter: grayscale(1) opacity(0.3);
+}
+
+.achievement-badge.unlocked {
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
+  transform: scale(1.05);
+}
+
+.achievement-badge.unlocked:hover {
+  transform: scale(1.15) translateY(-5px);
+}
+
+.badge-name {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.achievement-badge.unlocked .badge-name {
+  color: white;
 }
 
 .section-header {

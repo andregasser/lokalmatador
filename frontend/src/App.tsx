@@ -23,11 +23,37 @@ import {
   Zap,
   Target,
   Clock,
-  Flame
+  Flame,
+  Award,
+  Moon,
+  Star,
+  ShieldCheck
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
 const QUESTION_TIME_LIMIT = 20;
+
+const RANKS = [
+  { min: 0, title: "Rekrut", color: "#94a3b8" },
+  { min: 5000, title: "Soldat", color: "#4ade80" },
+  { min: 15000, title: "Korporal", color: "#38bdf8" },
+  { min: 35000, title: "Wachtmeister", color: "#fb923c" },
+  { min: 75000, title: "Offizier", color: "#f472b6" },
+  { min: 150000, title: "Lokalmatador", color: "#ff5252" },
+  { min: 300000, title: "Legende", color: "#fbbf24" }
+];
+
+const ACHIEVEMENTS = [
+  { id: 'speed_demon', title: 'Blitz-Reaktion', desc: 'Antwort in unter 2 Sek.', icon: Zap, color: '#facc15' },
+  { id: 'perfect_round', title: 'Perfekter Einsatz', desc: '10/10 Punkte in einer Runde', icon: Star, color: '#fbbf24' },
+  { id: 'night_shift', title: 'Nachtschicht', desc: 'Spiele eine Runde nach 22:00 Uhr', icon: Moon, color: '#818cf8' },
+  { id: 'on_fire_7', title: 'Dauerbrenner', desc: 'Erreiche einen 7er Streak', icon: Flame, color: '#ff5252' },
+  { id: 'local_hero', title: 'Ehrenbürger', desc: 'Erreiche 100.000 Gesamtpunkte', icon: ShieldCheck, color: '#4ade80' }
+];
+
+const getRank = (totalScore: number) => {
+  return [...RANKS].reverse().find(r => totalScore >= r.min) || RANKS[0];
+};
 
 const MapFocus = ({ coords }: { coords: [number, number][][] | null }) => {
   const map = useMap();
@@ -62,15 +88,20 @@ const App: React.FC = () => {
   const [currentStreet, setCurrentStreet] = useState<Street | null>(null);
   const [options, setOptions] = useState<string[]>([]);
   const [score, setScore] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const savedAchievements = JSON.parse(localStorage.getItem(`achievements_${user}`) || '[]');
+    setUnlockedAchievements(savedAchievements);
+
     const rawLeaderboard = localStorage.getItem('leaderboard');
     if (rawLeaderboard) {
       try {
@@ -96,7 +127,7 @@ const App: React.FC = () => {
       }
     };
     loadStreets();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (isTimerActive && timeLeft > 0) {
@@ -108,6 +139,15 @@ const App: React.FC = () => {
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isTimerActive, timeLeft]);
+
+  const unlockAchievement = (id: string) => {
+    if (!unlockedAchievements.includes(id)) {
+      const updated = [...unlockedAchievements, id];
+      setUnlockedAchievements(updated);
+      localStorage.setItem(`achievements_${user}`, JSON.stringify(updated));
+      // Potential toast feedback could go here
+    }
+  };
 
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -125,6 +165,7 @@ const App: React.FC = () => {
 
   const startCompetition = () => {
     setScore(0);
+    setCorrectCount(0);
     setTotalQuestions(0);
     setStreak(0);
     nextQuestion();
@@ -153,12 +194,15 @@ const App: React.FC = () => {
     if (timerRef.current) clearInterval(timerRef.current);
 
     const isCorrect = currentStreet?.name === option;
+    const responseTime = QUESTION_TIME_LIMIT - timeLeft;
     
-    // Streak logic
+    // Achievement: Speed Demon
+    if (isCorrect && responseTime < 2) unlockAchievement('speed_demon');
+
     const newStreak = isCorrect ? streak + 1 : 0;
     setStreak(newStreak);
+    if (newStreak >= 7) unlockAchievement('on_fire_7');
 
-    // Multiplier logic
     let multiplier = 1;
     if (newStreak >= 10) multiplier = 3;
     else if (newStreak >= 5) multiplier = 2;
@@ -170,25 +214,48 @@ const App: React.FC = () => {
 
     if (isCorrect) {
       setScore(prev => prev + roundPoints);
+      setCorrectCount(prev => prev + 1);
       setFeedback(t('correct'));
     } else {
       setFeedback(option === "" ? "Zeit abgelaufen!" : t('wrong', { name: currentStreet?.name }));
     }
 
     if (totalQuestions >= 10) {
+      const finalCorrectCount = isCorrect ? correctCount + 1 : correctCount;
+      const finalScore = score + roundPoints;
+      
+      // Achievement: Perfect Round
+      if (finalCorrectCount === 10) unlockAchievement('perfect_round');
+      
+      // Achievement: Night Shift (Hour 22-05)
+      const hour = new Date().getHours();
+      if (hour >= 22 || hour < 5) unlockAchievement('night_shift');
+
       const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
       leaderboard.push({ 
         user, 
-        score: score + roundPoints, 
+        score: finalScore, 
         date: new Date().toLocaleString() 
       });
       localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+
+      // Achievement: Local Hero
+      const userTotalScore = leaderboard
+        .filter((entry: any) => entry.user === user)
+        .reduce((sum: number, entry: any) => sum + entry.score, 0);
+      if (userTotalScore >= 100000) unlockAchievement('local_hero');
     }
   };
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
   };
+
+  const leaderboardData = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+  const userTotalScore = leaderboardData
+    .filter((entry: any) => entry.user === user)
+    .reduce((sum: number, entry: any) => sum + entry.score, 0);
+  const userRank = getRank(userTotalScore);
 
   if (!user) {
     return (
@@ -226,7 +293,12 @@ const App: React.FC = () => {
         <div className="header-left">
           <div className="user-info">
             <MapIcon size={20} className="header-icon" />
-            {t('firefighter')}: <strong>{user}</strong>
+            <div className="user-text-details">
+              <span className="user-name"><strong>{user}</strong></span>
+              <span className="user-rank-badge" style={{ backgroundColor: userRank.color + '33', color: userRank.color }}>
+                {userRank.title}
+              </span>
+            </div>
           </div>
           <div className="header-divider"></div>
           <select className="lang-select" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
@@ -413,23 +485,48 @@ const App: React.FC = () => {
         {mode === 'leaderboard' && (
           <div className="leaderboard-container">
             <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>{t('leaderboard')}</h2></div>
+            
+            {/* Achievements Section */}
+            <div className="achievements-shelf">
+              {ACHIEVEMENTS.map(ach => {
+                const isUnlocked = unlockedAchievements.includes(ach.id);
+                return (
+                  <div key={ach.id} className={`achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
+                    <ach.icon size={24} color={isUnlocked ? ach.color : '#475569'} />
+                    <span className="badge-name">{ach.title}</span>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="leaderboard-table-wrapper">
               <table>
                 <thead>
                   <tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr>
                 </thead>
                 <tbody>
-                  {JSON.parse(localStorage.getItem('leaderboard') || '[]')
+                  {leaderboardData
                     .sort((a: any, b: any) => b.score - a.score)
                     .slice(0, 10)
-                    .map((entry: any, i: number) => (
-                      <tr key={i} className={entry.user === user ? 'highlight' : ''}>
-                        <td>#{i + 1}</td>
-                        <td>{entry.user}</td>
-                        <td className="score-cell">{entry.score.toLocaleString()}</td>
-                        <td>{entry.date}</td>
-                      </tr>
-                    ))}
+                    .map((entry: any, i: number) => {
+                      const totalScoreForEntry = leaderboardData
+                        .filter((ld: any) => ld.user === entry.user)
+                        .reduce((sum: number, ld: any) => sum + ld.score, 0);
+                      const rankForEntry = getRank(totalScoreForEntry);
+                      return (
+                        <tr key={i} className={entry.user === user ? 'highlight' : ''}>
+                          <td>#{i + 1}</td>
+                          <td>
+                            <div className="leaderboard-user-cell">
+                              <span className="leaderboard-name">{entry.user}</span>
+                              <span className="leaderboard-rank" style={{ color: rankForEntry.color }}>{rankForEntry.title}</span>
+                            </div>
+                          </td>
+                          <td className="score-cell">{entry.score.toLocaleString()}</td>
+                          <td>{entry.date}</td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -442,22 +539,20 @@ const App: React.FC = () => {
             <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
             <div className="release-list">
               <div className="release-item">
+                <div className="version-badge">v1.3.0</div>
+                <h3>Dienstgrade & Abzeichen</h3>
+                <ul>
+                  <li>🏅 **Achievements**: Sammle Abzeichen für besondere Leistungen.</li>
+                  <li>🎖️ **Dienstgrade**: Werde von 'Rekrut' zur 'Legende' befördert.</li>
+                  <li>📅 **Nachtschicht**: Spezielle Belohnung für nächtliches Training.</li>
+                </ul>
+              </div>
+              <div className="release-item">
                 <div className="version-badge">v1.2.0</div>
                 <h3>Gamification Update</h3>
                 <ul>
                   <li>⏱️ **Time Bonus**: More points for faster answers!</li>
                   <li>🔥 **Streaks**: Maintain a streak for point multipliers (up to 3x!).</li>
-                  <li>📊 **Enhanced Scoring**: Scores now reflect speed and precision.</li>
-                  <li>⏳ **Countdown Timer**: 20 seconds to find the street.</li>
-                </ul>
-              </div>
-              <div className="release-item">
-                <div className="version-badge">v1.1.0</div>
-                <h3>{t('rel_1_1_0_title')}</h3>
-                <ul>
-                  {(t('rel_1_1_0_items', { returnObjects: true }) as string[]).map((item, i) => (
-                    <li key={i}>{item.replace(/\*\*(.*?)\*\*/g, '$1')}</li>
-                  ))}
                 </ul>
               </div>
             </div>

@@ -30,8 +30,7 @@ import {
   Compass,
   Medal,
   ShieldAlert,
-  User as UserIcon,
-  Timer
+  User as UserIcon
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -293,7 +292,13 @@ const App: React.FC = () => {
             <Compass size={16} /><div className="completion-bar-wrapper"><div className="completion-bar" style={{ width: `${completionRate}%` }}></div></div><span className="completion-text">{completionRate}%</span>
           </div>
           <div className="header-divider"></div>
-          <select className="lang-select" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}><option value="de">DE</option><option value="en">EN</option></select>
+          <div className="lang-select-wrapper-header">
+            <Languages size={18} color="var(--text-muted)" />
+            <select className="lang-select-header" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
+              <option value="de">DE</option>
+              <option value="en">EN</option>
+            </select>
+          </div>
         </div>
         <nav>
           <button className={mode === 'learn' ? 'active' : ''} onClick={() => setMode('learn')}><BookOpen size={18} /> {t('learn_mode')}</button>
@@ -309,14 +314,6 @@ const App: React.FC = () => {
           <div className="map-loading-overlay">
             <div className="spinner"></div>
             <p>{t('loading')}</p>
-          </div>
-        )}
-
-        {!loading && streets.length === 0 && (
-          <div className="error-state">
-            <XCircle size={48} color="var(--primary)" />
-            <p>Could not load street data.</p>
-            <button onClick={() => window.location.reload()} className="back-btn">Retry</button>
           </div>
         )}
 
@@ -336,7 +333,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {mode === 'learn' && (
+        {mode === 'learn' && streets.length > 0 && (
           <div className="map-container">
             <MapContainer key={`map-learn-${streets.length}`} center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
               <LayersControl position="topright">
@@ -423,84 +420,84 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {mode === 'leaderboard' && (
+        {(mode === 'leaderboard' || mode === 'release_notes') && (
           <div className="scroll-content">
-            <div className="leaderboard-container">
-              <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>Hall of Fame</h2></div>
-              <div className="podium-container">
-                {topThree.map((entry, i) => {
-                  const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
-                  const rank = getRank(totalS);
-                  const medalColors = ['#fbbf24', '#cbd5e1', '#d97706'];
-                  return (
-                    <div key={i} className={`podium-card rank-${i + 1}`}>
-                      <div className="podium-medal" style={{ backgroundColor: medalColors[i] }}><Medal size={24} color="#0f172a" /></div>
-                      <span className="podium-name">{entry.user}</span>
-                      <span className="podium-rank" style={{ color: rank.color }}>{rank.title}</span>
-                      <span className="podium-score">{entry.score.toLocaleString()}</span>
-                    </div>
-                  );
-                })}
+            {mode === 'leaderboard' && (
+              <div className="leaderboard-container">
+                <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>Hall of Fame</h2></div>
+                <div className="podium-container">
+                  {topThree.map((entry, i) => {
+                    const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
+                    const rank = getRank(totalS);
+                    const medalColors = ['#fbbf24', '#cbd5e1', '#d97706'];
+                    return (
+                      <div key={i} className={`podium-card rank-${i + 1}`}>
+                        <div className="podium-medal" style={{ backgroundColor: medalColors[i] }}><Medal size={24} color="#0f172a" /></div>
+                        <span className="podium-name">{entry.user}</span>
+                        <span className="podium-rank" style={{ color: rank.color }}>{rank.title}</span>
+                        <span className="podium-score">{entry.score.toLocaleString()}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="leaderboard-table-wrapper">
+                  <table>
+                    <thead><tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr></thead>
+                    <tbody>
+                      {restOfList.map((entry: any, i: number) => {
+                        const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
+                        const rank = getRank(totalS);
+                        return (
+                          <tr key={i} className={entry.user === user ? 'highlight' : ''}>
+                            <td>#{i + 4}</td>
+                            <td><div className="leaderboard-user-cell"><span className="leaderboard-name">{entry.user}</span><span className="leaderboard-rank" style={{ color: rank.color }}>{rank.title}</span></div></td>
+                            <td className="score-cell">{entry.score.toLocaleString()}</td>
+                            <td>{entry.date}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="achievements-shelf">
+                  {ACHIEVEMENTS.map(ach => {
+                    const isUnlocked = unlockedAchievements.includes(ach.id);
+                    return (
+                      <div key={ach.id} className={`achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
+                        <ach.icon size={24} color={isUnlocked ? ach.color : '#475569'} />
+                        <span className="badge-name">{ach.title}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
               </div>
-              <div className="leaderboard-table-wrapper">
-                <table>
-                  <thead><tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr></thead>
-                  <tbody>
-                    {restOfList.map((entry: any, i: number) => {
-                      const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
-                      const rank = getRank(totalS);
-                      return (
-                        <tr key={i} className={entry.user === user ? 'highlight' : ''}>
-                          <td>#{i + 4}</td>
-                          <td><div className="leaderboard-user-cell"><span className="leaderboard-name">{entry.user}</span><span className="leaderboard-rank" style={{ color: rank.color }}>{rank.title}</span></div></td>
-                          <td className="score-cell">{entry.score.toLocaleString()}</td>
-                          <td>{entry.date}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <div className="achievements-shelf">
-                {ACHIEVEMENTS.map(ach => {
-                  const isUnlocked = unlockedAchievements.includes(ach.id);
-                  return (
-                    <div key={ach.id} className={`achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
-                      <ach.icon size={24} color={isUnlocked ? ach.color : '#475569'} />
-                      <span className="badge-name">{ach.title}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
-            </div>
-          </div>
-        )}
+            )}
 
-        {mode === 'release_notes' && (
-          <div className="scroll-content">
-            <div className="release-notes-container">
-              <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
-              <div className="release-list">
-                <div className="release-item">
-                  <div className="version-badge">v1.6.0</div>
-                  <h3>Hall of Fame Redesign</h3>
-                  <ul>
-                    <li>🏆 **Podium View**: Die Top 3 werden jetzt prunkvoll auf dem Podium präsentiert.</li>
-                    <li>🏅 **Medaillen**: Gold, Silber und Bronze für die Champions.</li>
-                  </ul>
+            {mode === 'release_notes' && (
+              <div className="release-notes-container">
+                <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
+                <div className="release-list">
+                  <div className="release-item">
+                    <div className="version-badge">v1.6.0</div>
+                    <h3>Hall of Fame Redesign</h3>
+                    <ul>
+                      <li>🏆 **Podium View**: Die Top 3 werden jetzt prunkvoll auf dem Podium präsentiert.</li>
+                      <li>🏅 **Medaillen**: Gold, Silber und Bronze für die Champions.</li>
+                    </ul>
+                  </div>
+                  <div className="release-item">
+                    <div className="version-badge">v1.5.0</div>
+                    <h3>Street Master System</h3>
+                    <ul>
+                      <li>🧭 **Entdecker-Bonus**: +1000 Punkte für jede zum ersten Mal erkannte Strasse.</li>
+                      <li>📈 **Gebietskenntnis**: Verfolge deinen Fortschritt im Header (0-100%).</li>
+                    </ul>
+                  </div>
                 </div>
-                <div className="release-item">
-                  <div className="version-badge">v1.5.0</div>
-                  <h3>Street Master System</h3>
-                  <ul>
-                    <li>🧭 **Entdecker-Bonus**: +1000 Punkte für jede zum ersten Mal erkannte Strasse.</li>
-                    <li>📈 **Gebietskenntnis**: Verfolge deinen Fortschritt im Header (0-100%).</li>
-                  </ul>
-                </div>
+                <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
               </div>
-              <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
-            </div>
+            )}
           </div>
         )}
       </main>

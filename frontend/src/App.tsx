@@ -22,11 +22,12 @@ import {
   Play,
   Zap,
   Target,
-  Clock
+  Clock,
+  Flame
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
-const QUESTION_TIME_LIMIT = 10;
+const QUESTION_TIME_LIMIT = 20;
 
 const MapFocus = ({ coords }: { coords: [number, number][][] | null }) => {
   const map = useMap();
@@ -66,6 +67,7 @@ const App: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [streak, setStreak] = useState(0);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -124,6 +126,7 @@ const App: React.FC = () => {
   const startCompetition = () => {
     setScore(0);
     setTotalQuestions(0);
+    setStreak(0);
     nextQuestion();
   };
 
@@ -150,8 +153,20 @@ const App: React.FC = () => {
     if (timerRef.current) clearInterval(timerRef.current);
 
     const isCorrect = currentStreet?.name === option;
+    
+    // Streak logic
+    const newStreak = isCorrect ? streak + 1 : 0;
+    setStreak(newStreak);
+
+    // Multiplier logic
+    let multiplier = 1;
+    if (newStreak >= 10) multiplier = 3;
+    else if (newStreak >= 5) multiplier = 2;
+    else if (newStreak >= 3) multiplier = 1.5;
+
     const timeBonus = isCorrect ? Math.floor(timeLeft * 100) : 0;
-    const roundPoints = isCorrect ? 500 + timeBonus : 0;
+    const basePoints = isCorrect ? 500 : 0;
+    const roundPoints = Math.floor((basePoints + timeBonus) * multiplier);
 
     if (isCorrect) {
       setScore(prev => prev + roundPoints);
@@ -258,7 +273,7 @@ const App: React.FC = () => {
                   <Clock size={24} color="var(--primary)" />
                   <div>
                     <h4>Zeitlimit</h4>
-                    <p>Du hast <strong>10 Sekunden</strong> pro Frage. Beeil dich!</p>
+                    <p>Du hast <strong>20 Sekunden</strong> pro Frage. Beeil dich!</p>
                   </div>
                 </div>
                 <div className="rule-item">
@@ -266,6 +281,13 @@ const App: React.FC = () => {
                   <div>
                     <h4>Speed-Bonus</h4>
                     <p>Je schneller du antwortest, desto mehr Bonus-Punkte bekommst du (bis zu <strong>1000 Extra</strong>).</p>
+                  </div>
+                </div>
+                <div className="rule-item">
+                  <Flame size={24} color="#fb923c" />
+                  <div>
+                    <h4>Combo-Streaks</h4>
+                    <p>Antworte mehrmals richtig für Multiplikatoren (3x: 1.5x, 5x: 2x, 10x: 3x Punkte!).</p>
                   </div>
                 </div>
               </div>
@@ -315,14 +337,21 @@ const App: React.FC = () => {
 
         {mode === 'compete' && currentStreet && !showRulesModal && (
           <div className="compete-container">
-            <div className="stats">
-              <Trophy size={16} /> {t('round')}: {totalQuestions}/10 | {t('points')}: {score.toLocaleString()}
+            <div className="stats-header">
+              <div className="stats-badge">
+                <Trophy size={16} /> {t('round')}: {totalQuestions}/10
+              </div>
+              <div className={`stats-badge score-badge ${streak >= 3 ? 'on-fire' : ''}`}>
+                {score.toLocaleString()} PTS
+                {streak >= 3 && <span className="multiplier">x{streak >= 10 ? '3' : streak >= 5 ? '2' : '1.5'}</span>}
+                {streak >= 3 && <Flame size={18} className="flame-icon" />}
+              </div>
             </div>
             
             <div className="timer-wrapper">
               <div className="timer-bar" style={{ 
                 width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`,
-                backgroundColor: timeLeft < 3 ? 'var(--primary)' : 'var(--accent)'
+                backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)'
               }}></div>
               <div className="timer-text"><Timer size={14} /> {Math.ceil(timeLeft)}s</div>
             </div>
@@ -355,6 +384,7 @@ const App: React.FC = () => {
                     <div className="feedback-text-content">
                       <h2 className="feedback-status">{feedback === t('correct') ? t('correct') : (timeLeft <= 0 ? "Zeit abgelaufen!" : "Falsch!")}</h2>
                       {feedback !== t('correct') && <p className="correct-answer-reveal">Korrekt ist {currentStreet?.name}</p>}
+                      {feedback === t('correct') && streak >= 3 && <p className="streak-feedback">STREAK: {streak} 🔥</p>}
                     </div>
                     <div className="feedback-actions">
                       {totalQuestions < 10 ? (
@@ -416,8 +446,9 @@ const App: React.FC = () => {
                 <h3>Gamification Update</h3>
                 <ul>
                   <li>⏱️ **Time Bonus**: More points for faster answers!</li>
+                  <li>🔥 **Streaks**: Maintain a streak for point multipliers (up to 3x!).</li>
                   <li>📊 **Enhanced Scoring**: Scores now reflect speed and precision.</li>
-                  <li>⏳ **Countdown Timer**: 10 seconds to find the street.</li>
+                  <li>⏳ **Countdown Timer**: 20 seconds to find the street.</li>
                 </ul>
               </div>
               <div className="release-item">

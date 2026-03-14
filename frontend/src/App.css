@@ -211,25 +211,78 @@ main {
   box-shadow: 0 8px 20px var(--primary-glow);
 }
 
-.stats {
+/* Competition Stats Layout */
+.stats-header {
   position: absolute;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--primary);
-  color: white;
-  padding: 10px 24px;
-  border-radius: 40px;
-  font-weight: 800;
-  box-shadow: 0 0 30px var(--primary-glow);
+  top: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
   z-index: 1000;
+  pointer-events: none;
+}
+
+.stats-badge {
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-weight: 800;
+  font-size: 0.85rem;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.8rem;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
 }
 
-/* Modal Styles */
+.score-badge {
+  background: var(--primary);
+  min-width: 120px;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.on-fire {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  box-shadow: 0 0 25px rgba(234, 88, 12, 0.6);
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.multiplier {
+  background: white;
+  color: #ea580c;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  margin-left: 5px;
+  animation: popIn 0.3s ease-out;
+}
+
+.flame-icon {
+  color: #ffeb3b;
+  animation: flicker 0.5s infinite alternate;
+}
+
+@keyframes flicker {
+  from { filter: drop-shadow(0 0 2px #f97316); transform: scale(1); }
+  to { filter: drop-shadow(0 0 8px #facc15); transform: scale(1.2); }
+}
+
+.streak-feedback {
+  color: #fb923c;
+  font-weight: 900;
+  font-size: 1.2rem;
+  margin-top: 5px;
+  text-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
+}
+
+/* Timer Styles */
+
 .modal-overlay {
   position: absolute;
   top: 0;

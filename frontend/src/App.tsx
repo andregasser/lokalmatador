@@ -28,7 +28,8 @@ import {
   Moon,
   Star,
   ShieldCheck,
-  Compass
+  Compass,
+  Medal
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -269,11 +270,16 @@ const App: React.FC = () => {
   const changeLanguage = (lng: string) => { i18n.changeLanguage(lng); };
 
   const leaderboardData = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+  const sortedLeaderboard = leaderboardData.sort((a: any, b: any) => b.score - a.score).slice(0, 10);
+  
   const userTotalScore = leaderboardData
     .filter((entry: any) => entry.user === user)
     .reduce((sum: number, entry: any) => sum + entry.score, 0);
   const userRank = getRank(userTotalScore);
   const completionRate = streets.length > 0 ? Math.round((knownStreetIds.length / streets.length) * 100) : 0;
+
+  const topThree = sortedLeaderboard.slice(0, 3);
+  const restOfList = sortedLeaderboard.slice(3);
 
   if (!user) {
     return (
@@ -400,12 +406,8 @@ const App: React.FC = () => {
                 <BookOpen size={18} /> {t('learn_overlay')}
               </div>
               <div className="map-legend">
-                <div className="legend-item">
-                  <span className="dot known"></span> {t('legend_known')}
-                </div>
-                <div className="legend-item">
-                  <span className="dot unknown"></span> {t('legend_unknown')}
-                </div>
+                <div className="legend-item"><span className="dot known"></span> {t('legend_known')}</div>
+                <div className="legend-item"><span className="dot unknown"></span> {t('legend_unknown')}</div>
               </div>
             </div>
           </div>
@@ -421,10 +423,14 @@ const App: React.FC = () => {
                 {streak >= 3 && <Flame size={18} className="flame-icon" />}
               </div>
             </div>
-            
             <div className="timer-wrapper">
-              <div className="timer-bar" style={{ width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`, backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)' }}></div>
-              <div className="timer-text"><Timer size={14} /> {Math.ceil(timeLeft)}s</div>
+              <div className="timer-bar-container">
+                <div className="timer-bar" style={{ 
+                  width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`,
+                  backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)'
+                }}></div>
+              </div>
+              <div className="timer-text">{Math.ceil(timeLeft)}s</div>
             </div>
 
             <div className="map-container mini-map">
@@ -437,7 +443,6 @@ const App: React.FC = () => {
                 <MapFocus coords={currentStreet.coordinates} /><MapResizer />
               </MapContainer>
             </div>
-            
             <div className="quiz-controls">
               {feedback ? (
                 <div className="feedback-overlay-content">
@@ -471,7 +476,51 @@ const App: React.FC = () => {
 
         {mode === 'leaderboard' && (
           <div className="leaderboard-container">
-            <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>{t('leaderboard')}</h2></div>
+            <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>Hall of Fame</h2></div>
+            
+            <div className="podium-container">
+              {topThree.map((entry, i) => {
+                const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
+                const rank = getRank(totalS);
+                const medalColors = ['#fbbf24', '#cbd5e1', '#d97706']; // Gold, Silver, Bronze
+                return (
+                  <div key={i} className={`podium-card rank-${i + 1}`}>
+                    <div className="podium-medal" style={{ backgroundColor: medalColors[i] }}>
+                      <Medal size={24} color="#0f172a" />
+                    </div>
+                    <span className="podium-name">{entry.user}</span>
+                    <span className="podium-rank" style={{ color: rank.color }}>{rank.title}</span>
+                    <span className="podium-score">{entry.score.toLocaleString()}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="leaderboard-table-wrapper">
+              <table>
+                <thead><tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr></thead>
+                <tbody>
+                  {restOfList.map((entry: any, i: number) => {
+                    const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
+                    const rank = getRank(totalS);
+                    return (
+                      <tr key={i} className={entry.user === user ? 'highlight' : ''}>
+                        <td>#{i + 4}</td>
+                        <td>
+                          <div className="leaderboard-user-cell">
+                            <span className="leaderboard-name">{entry.user}</span>
+                            <span className="leaderboard-rank" style={{ color: rank.color }}>{rank.title}</span>
+                          </div>
+                        </td>
+                        <td className="score-cell">{entry.score.toLocaleString()}</td>
+                        <td>{entry.date}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
             <div className="achievements-shelf">
               {ACHIEVEMENTS.map(ach => {
                 const isUnlocked = unlockedAchievements.includes(ach.id);
@@ -483,25 +532,6 @@ const App: React.FC = () => {
                 );
               })}
             </div>
-            <div className="leaderboard-table-wrapper">
-              <table>
-                <thead><tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr></thead>
-                <tbody>
-                  {leaderboardData.sort((a: any, b: any) => b.score - a.score).slice(0, 10).map((entry: any, i: number) => {
-                    const totalScoreForEntry = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
-                    const rankForEntry = getRank(totalScoreForEntry);
-                    return (
-                      <tr key={i} className={entry.user === user ? 'highlight' : ''}>
-                        <td>#{i + 1}</td>
-                        <td><div className="leaderboard-user-cell"><span className="leaderboard-name">{entry.user}</span><span className="leaderboard-rank" style={{ color: rankForEntry.color }}>{rankForEntry.title}</span></div></td>
-                        <td className="score-cell">{entry.score.toLocaleString()}</td>
-                        <td>{entry.date}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
             <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
           </div>
         )}
@@ -511,20 +541,20 @@ const App: React.FC = () => {
             <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
             <div className="release-list">
               <div className="release-item">
+                <div className="version-badge">v1.6.0</div>
+                <h3>Hall of Fame Redesign</h3>
+                <ul>
+                  <li>🏆 **Podium View**: Die Top 3 werden jetzt prunkvoll auf dem Podium präsentiert.</li>
+                  <li>🏅 **Medaillen**: Gold, Silber und Bronze für die Champions.</li>
+                  <li>✨ **Polished UI**: Leaderboard komplett grafisch überarbeitet.</li>
+                </ul>
+              </div>
+              <div className="release-item">
                 <div className="version-badge">v1.5.0</div>
                 <h3>Street Master System</h3>
                 <ul>
                   <li>🧭 **Entdecker-Bonus**: +1000 Punkte für jede zum ersten Mal erkannte Strasse.</li>
                   <li>📈 **Gebietskenntnis**: Verfolge deinen Fortschritt im Header (0-100%).</li>
-                  <li>✅ **Visuelle Häkchen**: Bereits bekannte Strassen werden im Lernmodus markiert.</li>
-                </ul>
-              </div>
-              <div className="release-item">
-                <div className="version-badge">v1.4.0</div>
-                <h3>Visual Rewards</h3>
-                <ul>
-                  <li>🎉 **Confetti**: Celebrate perfect rounds and achievements!</li>
-                  <li>🚨 **Emergency Lights**: Visual blue/red light effect for epic wins.</li>
                 </ul>
               </div>
             </div>

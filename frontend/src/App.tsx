@@ -7,6 +7,7 @@ import { fetchBassersdorfStreets } from './osmService';
 import type { Street } from './osmService';
 import './App.css';
 import { useTranslation } from 'react-i18next';
+import confetti from 'canvas-confetti';
 import { 
   BookOpen, 
   Trophy, 
@@ -24,7 +25,6 @@ import {
   Target,
   Clock,
   Flame,
-  Award,
   Moon,
   Star,
   ShieldCheck
@@ -96,9 +96,11 @@ const App: React.FC = () => {
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [streak, setStreak] = useState(0);
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (!user) return;
     const savedAchievements = JSON.parse(localStorage.getItem(`achievements_${user}`) || '[]');
     setUnlockedAchievements(savedAchievements);
 
@@ -140,12 +142,23 @@ const App: React.FC = () => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isTimerActive, timeLeft]);
 
+  const triggerEmergencyEffect = () => {
+    setIsEmergencyActive(true);
+    setTimeout(() => setIsEmergencyActive(false), 3000);
+  };
+
   const unlockAchievement = (id: string) => {
     if (!unlockedAchievements.includes(id)) {
       const updated = [...unlockedAchievements, id];
       setUnlockedAchievements(updated);
       localStorage.setItem(`achievements_${user}`, JSON.stringify(updated));
-      // Potential toast feedback could go here
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ff5252', '#38bdf8', '#fbbf24']
+      });
+      triggerEmergencyEffect();
     }
   };
 
@@ -196,7 +209,6 @@ const App: React.FC = () => {
     const isCorrect = currentStreet?.name === option;
     const responseTime = QUESTION_TIME_LIMIT - timeLeft;
     
-    // Achievement: Speed Demon
     if (isCorrect && responseTime < 2) unlockAchievement('speed_demon');
 
     const newStreak = isCorrect ? streak + 1 : 0;
@@ -224,22 +236,18 @@ const App: React.FC = () => {
       const finalCorrectCount = isCorrect ? correctCount + 1 : correctCount;
       const finalScore = score + roundPoints;
       
-      // Achievement: Perfect Round
-      if (finalCorrectCount === 10) unlockAchievement('perfect_round');
+      if (finalCorrectCount === 10) {
+        unlockAchievement('perfect_round');
+        confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 } });
+      }
       
-      // Achievement: Night Shift (Hour 22-05)
       const hour = new Date().getHours();
       if (hour >= 22 || hour < 5) unlockAchievement('night_shift');
 
       const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-      leaderboard.push({ 
-        user, 
-        score: finalScore, 
-        date: new Date().toLocaleString() 
-      });
+      leaderboard.push({ user, score: finalScore, date: new Date().toLocaleString() });
       localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
 
-      // Achievement: Local Hero
       const userTotalScore = leaderboard
         .filter((entry: any) => entry.user === user)
         .reduce((sum: number, entry: any) => sum + entry.score, 0);
@@ -288,7 +296,7 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="app-wrapper">
+    <div className={`app-wrapper ${isEmergencyActive ? 'emergency-lights' : ''}`}>
       <header>
         <div className="header-left">
           <div className="user-info">
@@ -410,9 +418,7 @@ const App: React.FC = () => {
         {mode === 'compete' && currentStreet && !showRulesModal && (
           <div className="compete-container">
             <div className="stats-header">
-              <div className="stats-badge">
-                <Trophy size={16} /> {t('round')}: {totalQuestions}/10
-              </div>
+              <div className="stats-badge"><Trophy size={16} /> {t('round')}: {totalQuestions}/10</div>
               <div className={`stats-badge score-badge ${streak >= 3 ? 'on-fire' : ''}`}>
                 {score.toLocaleString()} PTS
                 {streak >= 3 && <span className="multiplier">x{streak >= 10 ? '3' : streak >= 5 ? '2' : '1.5'}</span>}
@@ -485,8 +491,6 @@ const App: React.FC = () => {
         {mode === 'leaderboard' && (
           <div className="leaderboard-container">
             <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>{t('leaderboard')}</h2></div>
-            
-            {/* Achievements Section */}
             <div className="achievements-shelf">
               {ACHIEVEMENTS.map(ach => {
                 const isUnlocked = unlockedAchievements.includes(ach.id);
@@ -498,7 +502,6 @@ const App: React.FC = () => {
                 );
               })}
             </div>
-
             <div className="leaderboard-table-wrapper">
               <table>
                 <thead>
@@ -539,20 +542,20 @@ const App: React.FC = () => {
             <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
             <div className="release-list">
               <div className="release-item">
+                <div className="version-badge">v1.4.0</div>
+                <h3>Visual Rewards</h3>
+                <ul>
+                  <li>🎉 **Confetti**: Celebrate perfect rounds and achievements!</li>
+                  <li>🚨 **Emergency Lights**: Visual blue/red light effect for epic wins.</li>
+                  <li>🗺️ **SwissTopo**: Best-in-class aerial imagery for Switzerland.</li>
+                </ul>
+              </div>
+              <div className="release-item">
                 <div className="version-badge">v1.3.0</div>
                 <h3>Dienstgrade & Abzeichen</h3>
                 <ul>
                   <li>🏅 **Achievements**: Sammle Abzeichen für besondere Leistungen.</li>
                   <li>🎖️ **Dienstgrade**: Werde von 'Rekrut' zur 'Legende' befördert.</li>
-                  <li>📅 **Nachtschicht**: Spezielle Belohnung für nächtliches Training.</li>
-                </ul>
-              </div>
-              <div className="release-item">
-                <div className="version-badge">v1.2.0</div>
-                <h3>Gamification Update</h3>
-                <ul>
-                  <li>⏱️ **Time Bonus**: More points for faster answers!</li>
-                  <li>🔥 **Streaks**: Maintain a streak for point multipliers (up to 3x!).</li>
                 </ul>
               </div>
             </div>

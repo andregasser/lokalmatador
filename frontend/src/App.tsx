@@ -7,6 +7,18 @@ import { fetchBassersdorfStreets } from './osmService';
 import type { Street } from './osmService';
 import './App.css';
 import { useTranslation } from 'react-i18next';
+import { 
+  BookOpen, 
+  Trophy, 
+  LayoutList, 
+  History, 
+  LogOut, 
+  Languages, 
+  Map as MapIcon, 
+  CheckCircle2, 
+  XCircle,
+  ChevronRight
+} from 'lucide-react';
 
 // Center of Bassersdorf
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -16,9 +28,8 @@ const MapFocus = ({ coords }: { coords: [number, number][][] | null }) => {
   const map = useMap();
   useEffect(() => {
     if (coords && coords.length > 0) {
-      // Flatten coords for fitBounds
       const flatCoords = coords.flat();
-      map.fitBounds(flatCoords as any, { padding: [50, 50], maxZoom: 20 });
+      map.fitBounds(flatCoords as any, { padding: [100, 100], maxZoom: 20 });
     }
   }, [coords, map]);
   return null;
@@ -53,8 +64,6 @@ const App: React.FC = () => {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("App mounted, starting OSM street fetch...");
-    
     // Migrate existing leaderboard entries
     const rawLeaderboard = localStorage.getItem('leaderboard');
     if (rawLeaderboard) {
@@ -71,6 +80,7 @@ const App: React.FC = () => {
     }
 
     const loadStreets = async () => {
+      setLoading(true);
       try {
         const data = await fetchBassersdorfStreets();
         setStreets(data);
@@ -120,7 +130,8 @@ const App: React.FC = () => {
   };
 
   const handleAnswer = (option: string) => {
-    if (currentStreet?.name === option) {
+    const isCorrect = currentStreet?.name === option;
+    if (isCorrect) {
       setScore(prev => prev + 1);
       setFeedback(t('correct'));
     } else {
@@ -131,7 +142,7 @@ const App: React.FC = () => {
       const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
       leaderboard.push({ 
         user, 
-        score: score + (currentStreet?.name === option ? 1 : 0), 
+        score: score + (isCorrect ? 1 : 0), 
         date: new Date().toLocaleString() 
       });
       localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
@@ -142,34 +153,60 @@ const App: React.FC = () => {
     i18n.changeLanguage(lng);
   };
 
+  // Auth Screen
   if (!user) {
     return (
       <div className="login-container">
-        <h1>{t('app_title')}</h1>
-        <p>{t('login_desc')}</p>
-        <form onSubmit={handleLogin}>
-          <input name="username" placeholder={t('username')} required />
-          <button type="submit">{t('login')}</button>
-        </form>
-        <select 
-          className="lang-select-login" 
-          value={i18n.language} 
-          onChange={(e) => changeLanguage(e.target.value)}
-        >
-          <option value="de">Deutsch</option>
-          <option value="en">English</option>
-        </select>
+        <div className="login-glow"></div>
+        <div className="login-content">
+          <h1>{t('app_title')}</h1>
+          <p>{t('login_desc')}</p>
+          <form onSubmit={handleLogin}>
+            <input name="username" placeholder={t('username')} required autoComplete="off" />
+            <button type="submit">{t('login')}</button>
+          </form>
+          <div className="lang-select-wrapper">
+            <Languages size={18} />
+            <select 
+              className="lang-select-login" 
+              value={i18n.language} 
+              onChange={(e) => changeLanguage(e.target.value)}
+            >
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (loading) return <div className="loading">{t('loading')}</div>;
+  // Loading Screen
+  if (loading) return (
+    <div className="loading">
+      <div className="spinner"></div>
+      <p>{t('loading')}</p>
+    </div>
+  );
+
+  // Empty State / Error Screen
+  if (!loading && streets.length === 0) return (
+    <div className="loading">
+      <XCircle size={48} color="var(--primary)" />
+      <p style={{ marginTop: '20px' }}>Could not load street data. OSM API may be busy.</p>
+      <button onClick={() => window.location.reload()} className="back-btn">Retry</button>
+    </div>
+  );
 
   return (
     <div className="app-wrapper">
       <header>
         <div className="header-left">
-          <div className="user-info">{t('firefighter')}: <strong>{user}</strong></div>
+          <div className="user-info">
+            <MapIcon size={20} className="header-icon" />
+            {t('firefighter')}: <strong>{user}</strong>
+          </div>
+          <div className="header-divider"></div>
           <select 
             className="lang-select" 
             value={i18n.language} 
@@ -180,18 +217,35 @@ const App: React.FC = () => {
           </select>
         </div>
         <nav>
-          <button onClick={() => setMode('learn')}>{t('learn_mode')}</button>
-          <button onClick={() => { setMode('compete'); startCompetition(); }}>{t('compete_mode')}</button>
-          <button onClick={() => setMode('leaderboard')}>{t('leaderboard')}</button>
-          <button onClick={() => setMode('release_notes')}>{t('release_notes')}</button>
-          <button onClick={handleLogout} className="logout-btn">{t('logout')}</button>
+          <button className={mode === 'learn' ? 'active' : ''} onClick={() => setMode('learn')}>
+            <BookOpen size={18} /> {t('learn_mode')}
+          </button>
+          <button className={mode === 'compete' ? 'active' : ''} onClick={() => { setMode('compete'); startCompetition(); }}>
+            <Trophy size={18} /> {t('compete_mode')}
+          </button>
+          <button className={mode === 'leaderboard' ? 'active' : ''} onClick={() => setMode('leaderboard')}>
+            <LayoutList size={18} /> {t('leaderboard')}
+          </button>
+          <button className={mode === 'release_notes' ? 'active' : ''} onClick={() => setMode('release_notes')}>
+            <History size={18} /> {t('release_notes')}
+          </button>
+          <button onClick={handleLogout} className="logout-btn">
+            <LogOut size={18} /> {t('logout')}
+          </button>
         </nav>
       </header>
 
       <main>
         {mode === 'learn' && (
           <div className="map-container">
-            <MapContainer center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
+            <MapContainer 
+              key={`map-learn-${streets.length}`}
+              center={BASSERSDORF_CENTER} 
+              zoom={15} 
+              maxZoom={22} 
+              style={{ height: '100%', width: '100%' }} 
+              className="leaflet-dark"
+            >
               <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name={t('map_osm')}>
                   <TileLayer 
@@ -203,7 +257,7 @@ const App: React.FC = () => {
                 <LayersControl.BaseLayer name={t('map_sat')}>
                   <TileLayer 
                     url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                    attribution='&copy; Esri'
                     maxZoom={22}
                     maxNativeZoom={19}
                   />
@@ -214,18 +268,16 @@ const App: React.FC = () => {
                 <React.Fragment key={s.id}>
                   {s.coordinates.map((path, idx) => (
                     <Polyline 
-                      key={`${s.id}-${idx}`} 
+                      key={`${s.id}-${idx}-${selectedStreetId === s.id}`} 
                       positions={path} 
                       pathOptions={{
-                        color: selectedStreetId === s.id ? "red" : "blue",
-                        weight: selectedStreetId === s.id ? 8 : 5,
-                        opacity: 0.8
+                        color: selectedStreetId === s.id ? "var(--primary)" : "var(--accent)",
+                        weight: selectedStreetId === s.id ? 8 : 4,
+                        opacity: selectedStreetId === s.id ? 1 : 0.6,
+                        className: selectedStreetId === s.id ? "pulse-line" : ""
                       }}
                       eventHandlers={{
-                        click: () => {
-                          console.log("Street clicked:", s.name);
-                          setSelectedStreetId(s.id);
-                        }
+                        click: () => setSelectedStreetId(s.id)
                       }}
                       interactive={true}
                     >
@@ -235,15 +287,27 @@ const App: React.FC = () => {
                 </React.Fragment>
               ))}
             </MapContainer>
-            <div className="overlay-info">{t('learn_overlay')}</div>
+            <div className="overlay-info">
+              <BookOpen size={18} /> {t('learn_overlay')}
+            </div>
           </div>
         )}
 
         {mode === 'compete' && currentStreet && (
           <div className="compete-container">
-            <div className="stats">{t('round')}: {totalQuestions}/10 | {t('points')}: {score}</div>
+            <div className="stats">
+              <Trophy size={16} /> {t('round')}: {totalQuestions}/10 | {t('points')}: {score}
+            </div>
             <div className="map-container mini-map">
-              <MapContainer center={BASSERSDORF_CENTER} zoom={17} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+              <MapContainer 
+                key={`map-compete-${currentStreet.id}`}
+                center={BASSERSDORF_CENTER} 
+                zoom={17} 
+                maxZoom={22} 
+                style={{ height: '100%', width: '100%' }} 
+                zoomControl={false} 
+                className="leaflet-dark"
+              >
                 <LayersControl position="topright">
                   <LayersControl.BaseLayer checked name={t('map_stumm')}>
                     <TileLayer 
@@ -256,13 +320,17 @@ const App: React.FC = () => {
                   <LayersControl.BaseLayer name={t('map_sat')}>
                     <TileLayer 
                       url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" 
-                      maxZoom={22}
+                      maxZoom={22} 
                       maxNativeZoom={19}
                     />
                   </LayersControl.BaseLayer>
                 </LayersControl>
                 {currentStreet.coordinates.map((path, idx) => (
-                  <Polyline key={idx} positions={path} color="red" weight={8} />
+                  <Polyline 
+                    key={idx} 
+                    positions={path} 
+                    pathOptions={{ color: "var(--primary)", className: "pulse-line" }} 
+                  />
                 ))}
                 <MapFocus coords={currentStreet.coordinates} />
                 <MapResizer />
@@ -271,16 +339,39 @@ const App: React.FC = () => {
             
             <div className="quiz-controls">
               {feedback ? (
-                <div className="feedback-area">
-                  <p className={feedback === t('correct') ? 'text-success' : 'text-error'}>{feedback}</p>
-                  {totalQuestions < 10 ? (
-                    <button onClick={nextQuestion}>{t('next_street')}</button>
-                  ) : (
-                    <div className="end-game">
-                      <h3>{t('comp_finished')} {score}/10</h3>
-                      <button onClick={() => setMode('leaderboard')}>{t('to_leaderboard')}</button>
+                <div className="feedback-overlay-content">
+                  <div className={`feedback-card ${feedback === t('correct') ? 'success' : 'error'}`}>
+                    <div className="feedback-icon-container">
+                      {feedback === t('correct') ? (
+                        <CheckCircle2 size={64} className="icon-pulse" />
+                      ) : (
+                        <XCircle size={64} className="icon-shake" />
+                      )}
                     </div>
-                  )}
+                    <div className="feedback-text-content">
+                      <h2 className="feedback-status">
+                        {feedback === t('correct') ? t('correct') : t('wrong').split('.')[0]}
+                      </h2>
+                      {feedback !== t('correct') && (
+                        <p className="correct-answer-reveal">
+                          {t('wrong', { name: currentStreet?.name }).split('. ')[1]}
+                        </p>
+                      )}
+                    </div>
+                    <div className="feedback-actions">
+                      {totalQuestions < 10 ? (
+                        <button onClick={nextQuestion} className="primary-action-btn">
+                          <span>{t('next_street')}</span>
+                          <ChevronRight size={20} />
+                        </button>
+                      ) : (
+                        <button onClick={() => setMode('leaderboard')} className="primary-action-btn finish">
+                          <Trophy size={20} />
+                          <span>{t('to_leaderboard')}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="options-grid">
@@ -295,34 +386,43 @@ const App: React.FC = () => {
 
         {mode === 'leaderboard' && (
           <div className="leaderboard-container">
-            <h2>{t('leaderboard')}</h2>
-            <table>
-              <thead>
-                <tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr>
-              </thead>
-              <tbody>
-                {JSON.parse(localStorage.getItem('leaderboard') || '[]')
-                  .sort((a: any, b: any) => b.score - a.score)
-                  .slice(0, 10)
-                  .map((entry: any, i: number) => (
-                    <tr key={i}>
-                      <td>{i + 1}</td>
-                      <td>{entry.user}</td>
-                      <td>{entry.score}/10</td>
-                      <td>{entry.date}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-            <button onClick={() => setMode('learn')}>{t('back_to_learn')}</button>
+            <div className="section-header">
+              <Trophy size={32} className="text-accent" />
+              <h2>{t('leaderboard')}</h2>
+            </div>
+            <div className="leaderboard-table-wrapper">
+              <table>
+                <thead>
+                  <tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr>
+                </thead>
+                <tbody>
+                  {JSON.parse(localStorage.getItem('leaderboard') || '[]')
+                    .sort((a: any, b: any) => b.score - a.score)
+                    .slice(0, 10)
+                    .map((entry: any, i: number) => (
+                      <tr key={i} className={entry.user === user ? 'highlight' : ''}>
+                        <td>#{i + 1}</td>
+                        <td>{entry.user}</td>
+                        <td className="score-cell">{entry.score}/10</td>
+                        <td>{entry.date}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+            <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
           </div>
         )}
 
         {mode === 'release_notes' && (
           <div className="release-notes-container">
-            <h2>{t('release_notes')}</h2>
+            <div className="section-header">
+              <History size={32} className="text-primary" />
+              <h2>{t('release_notes')}</h2>
+            </div>
             <div className="release-list">
               <div className="release-item">
+                <div className="version-badge">v1.1.0</div>
                 <h3>{t('rel_1_1_0_title')}</h3>
                 <ul>
                   {(t('rel_1_1_0_items', { returnObjects: true }) as string[]).map((item, i) => (
@@ -330,16 +430,8 @@ const App: React.FC = () => {
                   ))}
                 </ul>
               </div>
-              <div className="release-item">
-                <h3>{t('rel_1_0_0_title')}</h3>
-                <ul>
-                  {(t('rel_1_0_0_items', { returnObjects: true }) as string[]).map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
             </div>
-            <button onClick={() => setMode('learn')}>{t('back_to_learn')}</button>
+            <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
           </div>
         )}
       </main>

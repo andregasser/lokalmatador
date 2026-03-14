@@ -31,6 +31,8 @@ const resources = {
       "map_stumm": "Karte (Stumm)",
       "map_osm": "Karte (OSM)",
       "map_sat": "Satellit (Swisstopo)",
+      "legend_known": "Bekannt",
+      "legend_unknown": "Unbekannt",
       "rel_1_1_0_title": "Version 1.1.0",
       "rel_1_1_0_items": [
         "🌍 **Zweisprachigkeit**: Die App ist jetzt auf Deutsch und Englisch verfügbar.",
@@ -75,6 +77,8 @@ const resources = {
       "map_stumm": "Map (Mute)",
       "map_osm": "Map (OSM)",
       "map_sat": "Satellite (Swisstopo)",
+      "legend_known": "Known",
+      "legend_unknown": "Unknown",
       "rel_1_1_0_title": "Version 1.1.0",
       "rel_1_1_0_items": [
         "🌍 **Multi-language**: The app is now available in German and English.",

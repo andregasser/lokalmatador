@@ -27,7 +27,8 @@ import {
   Flame,
   Moon,
   Star,
-  ShieldCheck
+  ShieldCheck,
+  Compass
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -96,13 +97,18 @@ const App: React.FC = () => {
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [streak, setStreak] = useState(0);
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
+  const [knownStreetIds, setKnownStreetIds] = useState<string[]>([]);
   const [isEmergencyActive, setIsEmergencyActive] = useState(false);
+  const [lastDiscoveryBonus, setLastDiscoveryBonus] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
     const savedAchievements = JSON.parse(localStorage.getItem(`achievements_${user}`) || '[]');
     setUnlockedAchievements(savedAchievements);
+
+    const savedKnown = JSON.parse(localStorage.getItem(`known_streets_${user}`) || '[]');
+    setKnownStreetIds(savedKnown);
 
     const rawLeaderboard = localStorage.getItem('leaderboard');
     if (rawLeaderboard) {
@@ -152,12 +158,7 @@ const App: React.FC = () => {
       const updated = [...unlockedAchievements, id];
       setUnlockedAchievements(updated);
       localStorage.setItem(`achievements_${user}`, JSON.stringify(updated));
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#ff5252', '#38bdf8', '#fbbf24']
-      });
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#ff5252', '#38bdf8', '#fbbf24'] });
       triggerEmergencyEffect();
     }
   };
@@ -187,6 +188,7 @@ const App: React.FC = () => {
   const nextQuestion = () => {
     if (streets.length < 4) return;
     setFeedback(null);
+    setLastDiscoveryBonus(false);
     setTimeLeft(QUESTION_TIME_LIMIT);
     const correct = streets[Math.floor(Math.random() * streets.length)];
     const distractors = streets
@@ -220,9 +222,18 @@ const App: React.FC = () => {
     else if (newStreak >= 5) multiplier = 2;
     else if (newStreak >= 3) multiplier = 1.5;
 
+    let discoveryBonus = 0;
+    if (isCorrect && currentStreet && !knownStreetIds.includes(currentStreet.id)) {
+      discoveryBonus = 1000;
+      setLastDiscoveryBonus(true);
+      const updatedKnown = [...knownStreetIds, currentStreet.id];
+      setKnownStreetIds(updatedKnown);
+      localStorage.setItem(`known_streets_${user}`, JSON.stringify(updatedKnown));
+    }
+
     const timeBonus = isCorrect ? Math.floor(timeLeft * 100) : 0;
     const basePoints = isCorrect ? 500 : 0;
-    const roundPoints = Math.floor((basePoints + timeBonus) * multiplier);
+    const roundPoints = Math.floor((basePoints + timeBonus) * multiplier) + discoveryBonus;
 
     if (isCorrect) {
       setScore(prev => prev + roundPoints);
@@ -255,15 +266,14 @@ const App: React.FC = () => {
     }
   };
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
+  const changeLanguage = (lng: string) => { i18n.changeLanguage(lng); };
 
   const leaderboardData = JSON.parse(localStorage.getItem('leaderboard') || '[]');
   const userTotalScore = leaderboardData
     .filter((entry: any) => entry.user === user)
     .reduce((sum: number, entry: any) => sum + entry.score, 0);
   const userRank = getRank(userTotalScore);
+  const completionRate = streets.length > 0 ? Math.round((knownStreetIds.length / streets.length) * 100) : 0;
 
   if (!user) {
     return (
@@ -309,6 +319,14 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="header-divider"></div>
+          <div className="completion-stats" title={`${knownStreetIds.length} von ${streets.length} Strassen bekannt`}>
+            <Compass size={16} />
+            <div className="completion-bar-wrapper">
+              <div className="completion-bar" style={{ width: `${completionRate}%` }}></div>
+            </div>
+            <span className="completion-text">{completionRate}%</span>
+          </div>
+          <div className="header-divider"></div>
           <select className="lang-select" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
             <option value="de">DE</option>
             <option value="en">EN</option>
@@ -337,43 +355,15 @@ const App: React.FC = () => {
         {showRulesModal && (
           <div className="modal-overlay">
             <div className="rules-modal">
-              <div className="modal-header">
-                <Zap size={32} color="var(--primary)" />
-                <h2>Wettkampfregeln</h2>
-              </div>
+              <div className="modal-header"><Zap size={32} color="var(--primary)" /> <h2>Wettkampfregeln</h2></div>
               <div className="rules-grid">
-                <div className="rule-item">
-                  <Target size={24} color="var(--accent)" />
-                  <div>
-                    <h4>Basis-Punkte</h4>
-                    <p>Erhalte <strong>500 Punkte</strong> für jede korrekt identifizierte Strasse.</p>
-                  </div>
-                </div>
-                <div className="rule-item">
-                  <Clock size={24} color="var(--primary)" />
-                  <div>
-                    <h4>Zeitlimit</h4>
-                    <p>Du hast <strong>20 Sekunden</strong> pro Frage. Beeil dich!</p>
-                  </div>
-                </div>
-                <div className="rule-item">
-                  <Zap size={24} color="#4ade80" />
-                  <div>
-                    <h4>Speed-Bonus</h4>
-                    <p>Je schneller du antwortest, desto mehr Bonus-Punkte bekommst du (bis zu <strong>1000 Extra</strong>).</p>
-                  </div>
-                </div>
-                <div className="rule-item">
-                  <Flame size={24} color="#fb923c" />
-                  <div>
-                    <h4>Combo-Streaks</h4>
-                    <p>Antworte mehrmals richtig für Multiplikatoren (3x: 1.5x, 5x: 2x, 10x: 3x Punkte!).</p>
-                  </div>
-                </div>
+                <div className="rule-item"><Target size={24} color="var(--accent)" /> <div><h4>Basis-Punkte</h4><p>Erhalte <strong>500 Punkte</strong> für jede korrekte Strasse.</p></div></div>
+                <div className="rule-item"><Clock size={24} color="var(--primary)" /> <div><h4>Zeitlimit</h4><p>Du hast <strong>20 Sekunden</strong> pro Frage. Beeil dich!</p></div></div>
+                <div className="rule-item"><Zap size={24} color="#4ade80" /> <div><h4>Speed-Bonus</h4><p>Bis zu <strong>1000 Extra-Punkte</strong> für schnelle Antworten.</p></div></div>
+                <div className="rule-item"><Flame size={24} color="#fb923c" /> <div><h4>Combo-Streaks</h4><p>Multiplikatoren (bis zu 3x!) bei richtigen Serien.</p></div></div>
+                <div className="rule-item"><Compass size={24} color="var(--accent)" /> <div><h4>Entdecker-Bonus</h4><p>Erhalte einmalig <strong>1000 Punkte</strong>, wenn du eine neue Strasse zum ersten Mal findest!</p></div></div>
               </div>
-              <button className="primary-action-btn" onClick={() => { setShowRulesModal(false); startCompetition(); }}>
-                <Play size={20} fill="currentColor" /> JETZT STARTEN
-              </button>
+              <button className="primary-action-btn" onClick={() => { setShowRulesModal(false); startCompetition(); }}><Play size={20} fill="currentColor" /> JETZT STARTEN</button>
             </div>
           </div>
         )}
@@ -382,36 +372,42 @@ const App: React.FC = () => {
           <div className="map-container">
             <MapContainer key={`map-learn-${streets.length}`} center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
               <LayersControl position="topright">
-                <LayersControl.BaseLayer checked name={t('map_osm')}>
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={22} maxNativeZoom={19} className="leaflet-dark" />
-                </LayersControl.BaseLayer>
-                <LayersControl.BaseLayer name={t('map_sat')}>
-                  <TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} />
-                </LayersControl.BaseLayer>
+                <LayersControl.BaseLayer checked name={t('map_osm')}><TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={22} maxNativeZoom={19} className="leaflet-dark" /></LayersControl.BaseLayer>
+                <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
               </LayersControl>
               <MapResizer />
               {streets.map(s => (
                 <React.Fragment key={s.id}>
                   {s.coordinates.map((path, idx) => (
                     <Polyline 
-                      key={`${s.id}-${idx}-${selectedStreetId === s.id}`} 
-                      positions={path} 
+                      key={`${s.id}-${idx}-${selectedStreetId === s.id}`} positions={path} 
                       pathOptions={{
-                        color: selectedStreetId === s.id ? "var(--primary)" : "var(--accent)",
+                        color: selectedStreetId === s.id ? "var(--primary)" : (knownStreetIds.includes(s.id) ? "#4ade80" : "var(--accent)"),
                         weight: selectedStreetId === s.id ? 8 : 4,
                         opacity: selectedStreetId === s.id ? 1 : 0.6,
                         className: selectedStreetId === s.id ? "pulse-line" : ""
                       }}
-                      eventHandlers={{ click: () => setSelectedStreetId(s.id) }}
-                      interactive={true}
+                      eventHandlers={{ click: () => setSelectedStreetId(s.id) }} interactive={true}
                     >
-                      <Tooltip permanent={false}>{s.name}</Tooltip>
+                      <Tooltip permanent={false}>{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
                     </Polyline>
                   ))}
                 </React.Fragment>
               ))}
             </MapContainer>
-            <div className="overlay-info"><BookOpen size={18} /> {t('learn_overlay')}</div>
+            <div className="overlay-info">
+              <div className="overlay-text">
+                <BookOpen size={18} /> {t('learn_overlay')}
+              </div>
+              <div className="map-legend">
+                <div className="legend-item">
+                  <span className="dot known"></span> {t('legend_known')}
+                </div>
+                <div className="legend-item">
+                  <span className="dot unknown"></span> {t('legend_unknown')}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -427,28 +423,18 @@ const App: React.FC = () => {
             </div>
             
             <div className="timer-wrapper">
-              <div className="timer-bar" style={{ 
-                width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`,
-                backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)'
-              }}></div>
+              <div className="timer-bar" style={{ width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`, backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)' }}></div>
               <div className="timer-text"><Timer size={14} /> {Math.ceil(timeLeft)}s</div>
             </div>
 
             <div className="map-container mini-map">
               <MapContainer key={`map-compete-${currentStreet.id}`} center={BASSERSDORF_CENTER} zoom={17} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <LayersControl position="topright">
-                  <LayersControl.BaseLayer checked name={t('map_stumm')}>
-                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png" attribution='&copy; OSM' maxZoom={22} maxNativeZoom={19} className="leaflet-dark" />
-                  </LayersControl.BaseLayer>
-                  <LayersControl.BaseLayer name={t('map_sat')}>
-                    <TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} />
-                  </LayersControl.BaseLayer>
+                  <LayersControl.BaseLayer checked name={t('map_stumm')}><TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png" attribution='&copy; OSM' maxZoom={22} maxNativeZoom={19} className="leaflet-dark" /></LayersControl.BaseLayer>
+                  <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
                 </LayersControl>
-                {currentStreet.coordinates.map((path, idx) => (
-                  <Polyline key={idx} positions={path} pathOptions={{ color: "var(--primary)", className: "pulse-line" }} />
-                ))}
-                <MapFocus coords={currentStreet.coordinates} />
-                <MapResizer />
+                {currentStreet.coordinates.map((path, idx) => (<Polyline key={idx} positions={path} pathOptions={{ color: "var(--primary)", className: "pulse-line" }} />))}
+                <MapFocus coords={currentStreet.coordinates} /><MapResizer />
               </MapContainer>
             </div>
             
@@ -456,33 +442,28 @@ const App: React.FC = () => {
               {feedback ? (
                 <div className="feedback-overlay-content">
                   <div className={`feedback-card ${feedback === t('correct') ? 'success' : 'error'}`}>
-                    <div className="feedback-icon-container">
-                      {feedback === t('correct') ? <CheckCircle2 size={64} className="icon-pulse" /> : <XCircle size={64} className="icon-shake" />}
-                    </div>
+                    <div className="feedback-icon-container">{feedback === t('correct') ? <CheckCircle2 size={64} className="icon-pulse" /> : <XCircle size={64} className="icon-shake" />}</div>
                     <div className="feedback-text-content">
                       <h2 className="feedback-status">{feedback === t('correct') ? t('correct') : (timeLeft <= 0 ? "Zeit abgelaufen!" : "Falsch!")}</h2>
                       {feedback !== t('correct') && <p className="correct-answer-reveal">Korrekt ist {currentStreet?.name}</p>}
-                      {feedback === t('correct') && streak >= 3 && <p className="streak-feedback">STREAK: {streak} 🔥</p>}
+                      {feedback === t('correct') && (
+                        <div className="bonus-container">
+                          {streak >= 3 && <p className="streak-feedback">STREAK: {streak} 🔥</p>}
+                          {lastDiscoveryBonus && <p className="discovery-feedback">+1000 ENTDECKER-BONUS! 🧭</p>}
+                        </div>
+                      )}
                     </div>
                     <div className="feedback-actions">
                       {totalQuestions < 10 ? (
-                        <button onClick={nextQuestion} className="primary-action-btn">
-                          <span>{t('next_street')}</span> <ChevronRight size={20} />
-                        </button>
+                        <button onClick={nextQuestion} className="primary-action-btn"><span>{t('next_street')}</span> <ChevronRight size={20} /></button>
                       ) : (
-                        <button onClick={() => setMode('leaderboard')} className="primary-action-btn finish">
-                          <Trophy size={20} /> <span>{t('to_leaderboard')}</span>
-                        </button>
+                        <button onClick={() => setMode('leaderboard')} className="primary-action-btn finish"><Trophy size={20} /> <span>{t('to_leaderboard')}</span></button>
                       )}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="options-grid">
-                  {options.map(opt => (
-                    <button key={opt} onClick={() => handleAnswer(opt)}>{opt}</button>
-                  ))}
-                </div>
+                <div className="options-grid">{options.map(opt => (<button key={opt} onClick={() => handleAnswer(opt)}>{opt}</button>))}</div>
               )}
             </div>
           </div>
@@ -504,32 +485,20 @@ const App: React.FC = () => {
             </div>
             <div className="leaderboard-table-wrapper">
               <table>
-                <thead>
-                  <tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr>
-                </thead>
+                <thead><tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr></thead>
                 <tbody>
-                  {leaderboardData
-                    .sort((a: any, b: any) => b.score - a.score)
-                    .slice(0, 10)
-                    .map((entry: any, i: number) => {
-                      const totalScoreForEntry = leaderboardData
-                        .filter((ld: any) => ld.user === entry.user)
-                        .reduce((sum: number, ld: any) => sum + ld.score, 0);
-                      const rankForEntry = getRank(totalScoreForEntry);
-                      return (
-                        <tr key={i} className={entry.user === user ? 'highlight' : ''}>
-                          <td>#{i + 1}</td>
-                          <td>
-                            <div className="leaderboard-user-cell">
-                              <span className="leaderboard-name">{entry.user}</span>
-                              <span className="leaderboard-rank" style={{ color: rankForEntry.color }}>{rankForEntry.title}</span>
-                            </div>
-                          </td>
-                          <td className="score-cell">{entry.score.toLocaleString()}</td>
-                          <td>{entry.date}</td>
-                        </tr>
-                      );
-                    })}
+                  {leaderboardData.sort((a: any, b: any) => b.score - a.score).slice(0, 10).map((entry: any, i: number) => {
+                    const totalScoreForEntry = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
+                    const rankForEntry = getRank(totalScoreForEntry);
+                    return (
+                      <tr key={i} className={entry.user === user ? 'highlight' : ''}>
+                        <td>#{i + 1}</td>
+                        <td><div className="leaderboard-user-cell"><span className="leaderboard-name">{entry.user}</span><span className="leaderboard-rank" style={{ color: rankForEntry.color }}>{rankForEntry.title}</span></div></td>
+                        <td className="score-cell">{entry.score.toLocaleString()}</td>
+                        <td>{entry.date}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -542,20 +511,20 @@ const App: React.FC = () => {
             <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
             <div className="release-list">
               <div className="release-item">
+                <div className="version-badge">v1.5.0</div>
+                <h3>Street Master System</h3>
+                <ul>
+                  <li>🧭 **Entdecker-Bonus**: +1000 Punkte für jede zum ersten Mal erkannte Strasse.</li>
+                  <li>📈 **Gebietskenntnis**: Verfolge deinen Fortschritt im Header (0-100%).</li>
+                  <li>✅ **Visuelle Häkchen**: Bereits bekannte Strassen werden im Lernmodus markiert.</li>
+                </ul>
+              </div>
+              <div className="release-item">
                 <div className="version-badge">v1.4.0</div>
                 <h3>Visual Rewards</h3>
                 <ul>
                   <li>🎉 **Confetti**: Celebrate perfect rounds and achievements!</li>
                   <li>🚨 **Emergency Lights**: Visual blue/red light effect for epic wins.</li>
-                  <li>🗺️ **SwissTopo**: Best-in-class aerial imagery for Switzerland.</li>
-                </ul>
-              </div>
-              <div className="release-item">
-                <div className="version-badge">v1.3.0</div>
-                <h3>Dienstgrade & Abzeichen</h3>
-                <ul>
-                  <li>🏅 **Achievements**: Sammle Abzeichen für besondere Leistungen.</li>
-                  <li>🎖️ **Dienstgrade**: Werde von 'Rekrut' zur 'Legende' befördert.</li>
                 </ul>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Tooltip, useMap, LayersControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
@@ -17,13 +17,13 @@ import {
   Map as MapIcon, 
   CheckCircle2, 
   XCircle,
-  ChevronRight
+  ChevronRight,
+  Timer
 } from 'lucide-react';
 
-// Center of Bassersdorf
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
+const QUESTION_TIME_LIMIT = 10; // seconds
 
-// Map Focus Helper
 const MapFocus = ({ coords }: { coords: [number, number][][] | null }) => {
   const map = useMap();
   useEffect(() => {
@@ -35,13 +35,10 @@ const MapFocus = ({ coords }: { coords: [number, number][][] | null }) => {
   return null;
 };
 
-// Map Resizer Helper
 const MapResizer = () => {
   const map = useMap();
   useEffect(() => {
-    const handleResize = () => {
-      map.invalidateSize();
-    };
+    const handleResize = () => { map.invalidateSize(); };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [map]);
@@ -62,9 +59,11 @@ const App: React.FC = () => {
   const [score, setScore] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Migrate existing leaderboard entries
     const rawLeaderboard = localStorage.getItem('leaderboard');
     if (rawLeaderboard) {
       try {
@@ -80,7 +79,6 @@ const App: React.FC = () => {
     }
 
     const loadStreets = async () => {
-      setLoading(true);
       try {
         const data = await fetchBassersdorfStreets();
         setStreets(data);
@@ -92,6 +90,18 @@ const App: React.FC = () => {
     };
     loadStreets();
   }, []);
+
+  // Timer logic
+  useEffect(() => {
+    if (isTimerActive && timeLeft > 0) {
+      timerRef.current = window.setInterval(() => {
+        setTimeLeft((prev) => prev - 0.1);
+      }, 100);
+    } else if (timeLeft <= 0 && isTimerActive) {
+      handleAnswer(""); // Time out
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isTimerActive, timeLeft]);
 
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -116,6 +126,7 @@ const App: React.FC = () => {
   const nextQuestion = () => {
     if (streets.length < 4) return;
     setFeedback(null);
+    setTimeLeft(QUESTION_TIME_LIMIT);
     const correct = streets[Math.floor(Math.random() * streets.length)];
     const distractors = streets
       .filter(s => s.name !== correct.name)
@@ -127,22 +138,29 @@ const App: React.FC = () => {
     setCurrentStreet(correct);
     setOptions(allOptions);
     setTotalQuestions(prev => prev + 1);
+    setIsTimerActive(true);
   };
 
   const handleAnswer = (option: string) => {
+    setIsTimerActive(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+
     const isCorrect = currentStreet?.name === option;
+    const timeBonus = isCorrect ? Math.floor(timeLeft * 100) : 0;
+    const roundPoints = isCorrect ? 500 + timeBonus : 0;
+
     if (isCorrect) {
-      setScore(prev => prev + 1);
+      setScore(prev => prev + roundPoints);
       setFeedback(t('correct'));
     } else {
-      setFeedback(t('wrong', { name: currentStreet?.name }));
+      setFeedback(option === "" ? "Zeit abgelaufen!" : t('wrong', { name: currentStreet?.name }));
     }
 
     if (totalQuestions >= 10) {
       const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
       leaderboard.push({ 
         user, 
-        score: score + (isCorrect ? 1 : 0), 
+        score: score + roundPoints, 
         date: new Date().toLocaleString() 
       });
       localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
@@ -153,7 +171,6 @@ const App: React.FC = () => {
     i18n.changeLanguage(lng);
   };
 
-  // Auth Screen
   if (!user) {
     return (
       <div className="login-container">
@@ -167,11 +184,7 @@ const App: React.FC = () => {
           </form>
           <div className="lang-select-wrapper">
             <Languages size={18} />
-            <select 
-              className="lang-select-login" 
-              value={i18n.language} 
-              onChange={(e) => changeLanguage(e.target.value)}
-            >
+            <select className="lang-select-login" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
               <option value="de">Deutsch</option>
               <option value="en">English</option>
             </select>
@@ -181,7 +194,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Loading Screen
   if (loading) return (
     <div className="loading">
       <div className="spinner"></div>
@@ -189,7 +201,6 @@ const App: React.FC = () => {
     </div>
   );
 
-  // Empty State / Error Screen
   if (!loading && streets.length === 0) return (
     <div className="loading">
       <XCircle size={48} color="var(--primary)" />
@@ -207,11 +218,7 @@ const App: React.FC = () => {
             {t('firefighter')}: <strong>{user}</strong>
           </div>
           <div className="header-divider"></div>
-          <select 
-            className="lang-select" 
-            value={i18n.language} 
-            onChange={(e) => changeLanguage(e.target.value)}
-          >
+          <select className="lang-select" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
             <option value="de">DE</option>
             <option value="en">EN</option>
           </select>
@@ -238,28 +245,13 @@ const App: React.FC = () => {
       <main>
         {mode === 'learn' && (
           <div className="map-container">
-            <MapContainer 
-              key={`map-learn-${streets.length}`}
-              center={BASSERSDORF_CENTER} 
-              zoom={15} 
-              maxZoom={22} 
-              style={{ height: '100%', width: '100%' }} 
-            >
+            <MapContainer key={`map-learn-${streets.length}`} center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
               <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name={t('map_osm')}>
-                  <TileLayer 
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
-                    maxZoom={22} 
-                    maxNativeZoom={19} 
-                    className="leaflet-dark"
-                  />
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={22} maxNativeZoom={19} className="leaflet-dark" />
                 </LayersControl.BaseLayer>
                 <LayersControl.BaseLayer name={t('map_sat')}>
-                  <TileLayer 
-                    url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg"
-                    attribution='&copy; swisstopo'
-                    maxZoom={22}
-                  />
+                  <TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} />
                 </LayersControl.BaseLayer>
               </LayersControl>
               <MapResizer />
@@ -275,9 +267,7 @@ const App: React.FC = () => {
                         opacity: selectedStreetId === s.id ? 1 : 0.6,
                         className: selectedStreetId === s.id ? "pulse-line" : ""
                       }}
-                      eventHandlers={{
-                        click: () => setSelectedStreetId(s.id)
-                      }}
+                      eventHandlers={{ click: () => setSelectedStreetId(s.id) }}
                       interactive={true}
                     >
                       <Tooltip permanent={false}>{s.name}</Tooltip>
@@ -286,9 +276,7 @@ const App: React.FC = () => {
                 </React.Fragment>
               ))}
             </MapContainer>
-            <div className="overlay-info">
-              <BookOpen size={18} /> {t('learn_overlay')}
-            </div>
+            <div className="overlay-info"><BookOpen size={18} /> {t('learn_overlay')}</div>
           </div>
         )}
 
@@ -297,39 +285,27 @@ const App: React.FC = () => {
             <div className="stats">
               <Trophy size={16} /> {t('round')}: {totalQuestions}/10 | {t('points')}: {score}
             </div>
+            
+            <div className="timer-wrapper">
+              <div className="timer-bar" style={{ 
+                width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`,
+                backgroundColor: timeLeft < 3 ? 'var(--primary)' : 'var(--accent)'
+              }}></div>
+              <div className="timer-text"><Timer size={14} /> {Math.ceil(timeLeft)}s</div>
+            </div>
+
             <div className="map-container mini-map">
-              <MapContainer 
-                key={`map-compete-${currentStreet.id}`}
-                center={BASSERSDORF_CENTER} 
-                zoom={17} 
-                maxZoom={22} 
-                style={{ height: '100%', width: '100%' }} 
-                zoomControl={false} 
-              >
+              <MapContainer key={`map-compete-${currentStreet.id}`} center={BASSERSDORF_CENTER} zoom={17} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <LayersControl position="topright">
                   <LayersControl.BaseLayer checked name={t('map_stumm')}>
-                    <TileLayer 
-                      url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
-                      attribution='&copy; OSM'
-                      maxZoom={22}
-                      maxNativeZoom={19}
-                      className="leaflet-dark"
-                    />
+                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png" attribution='&copy; OSM' maxZoom={22} maxNativeZoom={19} className="leaflet-dark" />
                   </LayersControl.BaseLayer>
                   <LayersControl.BaseLayer name={t('map_sat')}>
-                    <TileLayer 
-                      url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" 
-                      maxZoom={22} 
-                      attribution='&copy; swisstopo'
-                    />
+                    <TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} />
                   </LayersControl.BaseLayer>
                 </LayersControl>
                 {currentStreet.coordinates.map((path, idx) => (
-                  <Polyline 
-                    key={idx} 
-                    positions={path} 
-                    pathOptions={{ color: "var(--primary)", className: "pulse-line" }} 
-                  />
+                  <Polyline key={idx} positions={path} pathOptions={{ color: "var(--primary)", className: "pulse-line" }} />
                 ))}
                 <MapFocus coords={currentStreet.coordinates} />
                 <MapResizer />
@@ -341,32 +317,20 @@ const App: React.FC = () => {
                 <div className="feedback-overlay-content">
                   <div className={`feedback-card ${feedback === t('correct') ? 'success' : 'error'}`}>
                     <div className="feedback-icon-container">
-                      {feedback === t('correct') ? (
-                        <CheckCircle2 size={64} className="icon-pulse" />
-                      ) : (
-                        <XCircle size={64} className="icon-shake" />
-                      )}
+                      {feedback === t('correct') ? <CheckCircle2 size={64} className="icon-pulse" /> : <XCircle size={64} className="icon-shake" />}
                     </div>
                     <div className="feedback-text-content">
-                      <h2 className="feedback-status">
-                        {feedback === t('correct') ? t('correct') : t('wrong').split('.')[0]}
-                      </h2>
-                      {feedback !== t('correct') && (
-                        <p className="correct-answer-reveal">
-                          {t('wrong', { name: currentStreet?.name }).split('. ')[1]}
-                        </p>
-                      )}
+                      <h2 className="feedback-status">{feedback === t('correct') ? t('correct') : (timeLeft <= 0 ? "Zeit abgelaufen!" : "Falsch!")}</h2>
+                      {feedback !== t('correct') && <p className="correct-answer-reveal">Korrekt ist {currentStreet?.name}</p>}
                     </div>
                     <div className="feedback-actions">
                       {totalQuestions < 10 ? (
                         <button onClick={nextQuestion} className="primary-action-btn">
-                          <span>{t('next_street')}</span>
-                          <ChevronRight size={20} />
+                          <span>{t('next_street')}</span> <ChevronRight size={20} />
                         </button>
                       ) : (
                         <button onClick={() => setMode('leaderboard')} className="primary-action-btn finish">
-                          <Trophy size={20} />
-                          <span>{t('to_leaderboard')}</span>
+                          <Trophy size={20} /> <span>{t('to_leaderboard')}</span>
                         </button>
                       )}
                     </div>
@@ -385,10 +349,7 @@ const App: React.FC = () => {
 
         {mode === 'leaderboard' && (
           <div className="leaderboard-container">
-            <div className="section-header">
-              <Trophy size={32} className="text-accent" />
-              <h2>{t('leaderboard')}</h2>
-            </div>
+            <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>{t('leaderboard')}</h2></div>
             <div className="leaderboard-table-wrapper">
               <table>
                 <thead>
@@ -402,7 +363,7 @@ const App: React.FC = () => {
                       <tr key={i} className={entry.user === user ? 'highlight' : ''}>
                         <td>#{i + 1}</td>
                         <td>{entry.user}</td>
-                        <td className="score-cell">{entry.score}/10</td>
+                        <td className="score-cell">{entry.score.toLocaleString()}</td>
                         <td>{entry.date}</td>
                       </tr>
                     ))}
@@ -415,11 +376,17 @@ const App: React.FC = () => {
 
         {mode === 'release_notes' && (
           <div className="release-notes-container">
-            <div className="section-header">
-              <History size={32} className="text-primary" />
-              <h2>{t('release_notes')}</h2>
-            </div>
+            <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
             <div className="release-list">
+              <div className="release-item">
+                <div className="version-badge">v1.2.0</div>
+                <h3>Gamification Update</h3>
+                <ul>
+                  <li>⏱️ **Time Bonus**: More points for faster answers!</li>
+                  <li>📊 **Enhanced Scoring**: Scores now reflect speed and precision.</li>
+                  <li>⏳ **Countdown Timer**: 10 seconds to find the street.</li>
+                </ul>
+              </div>
               <div className="release-item">
                 <div className="version-badge">v1.1.0</div>
                 <h3>{t('rel_1_1_0_title')}</h3>

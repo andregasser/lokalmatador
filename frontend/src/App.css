@@ -229,6 +229,42 @@ main {
   font-size: 0.8rem;
 }
 
+/* Timer Styles */
+.timer-wrapper {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  z-index: 1000;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.timer-bar {
+  height: 6px;
+  border-radius: 10px;
+  transition: width 0.1s linear, background-color 0.3s ease;
+}
+
+.timer-text {
+  position: absolute;
+  right: 10px;
+  top: -25px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* Feedback Overlay Content */
 .feedback-overlay-content {
   animation: fadeIn 0.3s ease-out;

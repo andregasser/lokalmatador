@@ -19,7 +19,6 @@ import {
   CheckCircle2, 
   XCircle,
   ChevronRight,
-  Timer,
   Play,
   Zap,
   Target,
@@ -29,7 +28,9 @@ import {
   Star,
   ShieldCheck,
   Compass,
-  Medal
+  Medal,
+  ShieldAlert,
+  User as UserIcon
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -284,17 +285,29 @@ const App: React.FC = () => {
   if (!user) {
     return (
       <div className="login-container">
-        <div className="login-glow"></div>
+        <div className="login-background-deco">
+          <div className="circle-one"></div>
+          <div className="circle-two"></div>
+        </div>
         <div className="login-content">
-          <h1>{t('app_title')}</h1>
-          <p>{t('login_desc')}</p>
-          <form onSubmit={handleLogin}>
-            <input name="username" placeholder={t('username')} required autoComplete="off" />
-            <button type="submit">{t('login')}</button>
+          <div className="login-hero">
+            <ShieldAlert size={80} color="var(--primary)" className="hero-icon-main" />
+            <h1>{t('app_title')}</h1>
+            <p className="hero-subtitle">{t('login_desc')}</p>
+          </div>
+          <form className="login-form-modern" onSubmit={handleLogin}>
+            <div className="input-wrapper-modern">
+              <UserIcon size={20} className="input-icon" />
+              <input name="username" placeholder={t('username')} required autoComplete="off" />
+            </div>
+            <button type="submit" className="login-submit-btn">
+              <span>{t('login')}</span>
+              <ChevronRight size={20} />
+            </button>
           </form>
-          <div className="lang-select-wrapper">
+          <div className="lang-select-wrapper-modern">
             <Languages size={18} />
-            <select className="lang-select-login" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
+            <select className="lang-select-login-modern" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
               <option value="de">Deutsch</option>
               <option value="en">English</option>
             </select>
@@ -425,14 +438,10 @@ const App: React.FC = () => {
             </div>
             <div className="timer-wrapper">
               <div className="timer-bar-container">
-                <div className="timer-bar" style={{ 
-                  width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`,
-                  backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)'
-                }}></div>
+                <div className="timer-bar" style={{ width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`, backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)' }}></div>
               </div>
               <div className="timer-text">{Math.ceil(timeLeft)}s</div>
             </div>
-
             <div className="map-container mini-map">
               <MapContainer key={`map-compete-${currentStreet.id}`} center={BASSERSDORF_CENTER} zoom={17} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <LayersControl position="topright">
@@ -477,17 +486,14 @@ const App: React.FC = () => {
         {mode === 'leaderboard' && (
           <div className="leaderboard-container">
             <div className="section-header"><Trophy size={32} className="text-accent" /> <h2>Hall of Fame</h2></div>
-            
             <div className="podium-container">
               {topThree.map((entry, i) => {
                 const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
                 const rank = getRank(totalS);
-                const medalColors = ['#fbbf24', '#cbd5e1', '#d97706']; // Gold, Silver, Bronze
+                const medalColors = ['#fbbf24', '#cbd5e1', '#d97706'];
                 return (
                   <div key={i} className={`podium-card rank-${i + 1}`}>
-                    <div className="podium-medal" style={{ backgroundColor: medalColors[i] }}>
-                      <Medal size={24} color="#0f172a" />
-                    </div>
+                    <div className="podium-medal" style={{ backgroundColor: medalColors[i] }}><Medal size={24} color="#0f172a" /></div>
                     <span className="podium-name">{entry.user}</span>
                     <span className="podium-rank" style={{ color: rank.color }}>{rank.title}</span>
                     <span className="podium-score">{entry.score.toLocaleString()}</span>
@@ -495,7 +501,6 @@ const App: React.FC = () => {
                 );
               })}
             </div>
-
             <div className="leaderboard-table-wrapper">
               <table>
                 <thead><tr><th>{t('rank')}</th><th>{t('name')}</th><th>{t('points')}</th><th>{t('date')}</th></tr></thead>
@@ -506,12 +511,7 @@ const App: React.FC = () => {
                     return (
                       <tr key={i} className={entry.user === user ? 'highlight' : ''}>
                         <td>#{i + 4}</td>
-                        <td>
-                          <div className="leaderboard-user-cell">
-                            <span className="leaderboard-name">{entry.user}</span>
-                            <span className="leaderboard-rank" style={{ color: rank.color }}>{rank.title}</span>
-                          </div>
-                        </td>
+                        <td><div className="leaderboard-user-cell"><span className="leaderboard-name">{entry.user}</span><span className="leaderboard-rank" style={{ color: rank.color }}>{rank.title}</span></div></td>
                         <td className="score-cell">{entry.score.toLocaleString()}</td>
                         <td>{entry.date}</td>
                       </tr>
@@ -520,7 +520,6 @@ const App: React.FC = () => {
                 </tbody>
               </table>
             </div>
-
             <div className="achievements-shelf">
               {ACHIEVEMENTS.map(ach => {
                 const isUnlocked = unlockedAchievements.includes(ach.id);
@@ -546,15 +545,6 @@ const App: React.FC = () => {
                 <ul>
                   <li>🏆 **Podium View**: Die Top 3 werden jetzt prunkvoll auf dem Podium präsentiert.</li>
                   <li>🏅 **Medaillen**: Gold, Silber und Bronze für die Champions.</li>
-                  <li>✨ **Polished UI**: Leaderboard komplett grafisch überarbeitet.</li>
-                </ul>
-              </div>
-              <div className="release-item">
-                <div className="version-badge">v1.5.0</div>
-                <h3>Street Master System</h3>
-                <ul>
-                  <li>🧭 **Entdecker-Bonus**: +1000 Punkte für jede zum ersten Mal erkannte Strasse.</li>
-                  <li>📈 **Gebietskenntnis**: Verfolge deinen Fortschritt im Header (0-100%).</li>
                 </ul>
               </div>
             </div>

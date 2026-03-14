@@ -18,11 +18,15 @@ import {
   CheckCircle2, 
   XCircle,
   ChevronRight,
-  Timer
+  Timer,
+  Play,
+  Zap,
+  Target,
+  Clock
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
-const QUESTION_TIME_LIMIT = 10; // seconds
+const QUESTION_TIME_LIMIT = 10;
 
 const MapFocus = ({ coords }: { coords: [number, number][][] | null }) => {
   const map = useMap();
@@ -61,6 +65,7 @@ const App: React.FC = () => {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT);
   const [isTimerActive, setIsTimerActive] = useState(false);
+  const [showRulesModal, setShowRulesModal] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -91,14 +96,13 @@ const App: React.FC = () => {
     loadStreets();
   }, []);
 
-  // Timer logic
   useEffect(() => {
     if (isTimerActive && timeLeft > 0) {
       timerRef.current = window.setInterval(() => {
         setTimeLeft((prev) => prev - 0.1);
       }, 100);
     } else if (timeLeft <= 0 && isTimerActive) {
-      handleAnswer(""); // Time out
+      handleAnswer(""); 
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isTimerActive, timeLeft]);
@@ -201,14 +205,6 @@ const App: React.FC = () => {
     </div>
   );
 
-  if (!loading && streets.length === 0) return (
-    <div className="loading">
-      <XCircle size={48} color="var(--primary)" />
-      <p style={{ marginTop: '20px' }}>Could not load street data. OSM API may be busy.</p>
-      <button onClick={() => window.location.reload()} className="back-btn">Retry</button>
-    </div>
-  );
-
   return (
     <div className="app-wrapper">
       <header>
@@ -227,7 +223,7 @@ const App: React.FC = () => {
           <button className={mode === 'learn' ? 'active' : ''} onClick={() => setMode('learn')}>
             <BookOpen size={18} /> {t('learn_mode')}
           </button>
-          <button className={mode === 'compete' ? 'active' : ''} onClick={() => { setMode('compete'); startCompetition(); }}>
+          <button className={mode === 'compete' ? 'active' : ''} onClick={() => { setMode('compete'); setShowRulesModal(true); }}>
             <Trophy size={18} /> {t('compete_mode')}
           </button>
           <button className={mode === 'leaderboard' ? 'active' : ''} onClick={() => setMode('leaderboard')}>
@@ -243,6 +239,43 @@ const App: React.FC = () => {
       </header>
 
       <main>
+        {showRulesModal && (
+          <div className="modal-overlay">
+            <div className="rules-modal">
+              <div className="modal-header">
+                <Zap size={32} color="var(--primary)" />
+                <h2>Wettkampfregeln</h2>
+              </div>
+              <div className="rules-grid">
+                <div className="rule-item">
+                  <Target size={24} color="var(--accent)" />
+                  <div>
+                    <h4>Basis-Punkte</h4>
+                    <p>Erhalte <strong>500 Punkte</strong> für jede korrekt identifizierte Strasse.</p>
+                  </div>
+                </div>
+                <div className="rule-item">
+                  <Clock size={24} color="var(--primary)" />
+                  <div>
+                    <h4>Zeitlimit</h4>
+                    <p>Du hast <strong>10 Sekunden</strong> pro Frage. Beeil dich!</p>
+                  </div>
+                </div>
+                <div className="rule-item">
+                  <Zap size={24} color="#4ade80" />
+                  <div>
+                    <h4>Speed-Bonus</h4>
+                    <p>Je schneller du antwortest, desto mehr Bonus-Punkte bekommst du (bis zu <strong>1000 Extra</strong>).</p>
+                  </div>
+                </div>
+              </div>
+              <button className="primary-action-btn" onClick={() => { setShowRulesModal(false); startCompetition(); }}>
+                <Play size={20} fill="currentColor" /> JETZT STARTEN
+              </button>
+            </div>
+          </div>
+        )}
+
         {mode === 'learn' && (
           <div className="map-container">
             <MapContainer key={`map-learn-${streets.length}`} center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
@@ -280,10 +313,10 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {mode === 'compete' && currentStreet && (
+        {mode === 'compete' && currentStreet && !showRulesModal && (
           <div className="compete-container">
             <div className="stats">
-              <Trophy size={16} /> {t('round')}: {totalQuestions}/10 | {t('points')}: {score}
+              <Trophy size={16} /> {t('round')}: {totalQuestions}/10 | {t('points')}: {score.toLocaleString()}
             </div>
             
             <div className="timer-wrapper">

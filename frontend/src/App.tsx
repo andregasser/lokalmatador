@@ -332,11 +332,26 @@ const App: React.FC = () => {
             <div className="rules-modal">
               <div className="modal-header"><Zap size={32} color="var(--primary)" /> <h2>Wettkampfregeln</h2></div>
               <div className="rules-grid">
-                <div className="rule-item"><Target size={24} color="var(--accent)" /> <div><h4>Basis-Punkte</h4><p>Erhalte <strong>500 Punkte</strong> pro korrekte Strasse.</p></div></div>
-                <div className="rule-item"><Clock size={24} color="var(--primary)" /> <div><h4>Zeitlimit</h4><p>Du hast <strong>20 Sekunden</strong> pro Frage.</p></div></div>
-                <div className="rule-item"><Zap size={24} color="#4ade80" /> <div><h4>Speed-Bonus</h4><p>Bis zu <strong>1000 Extra-Punkte</strong> für schnelle Antworten.</p></div></div>
-                <div className="rule-item"><Flame size={24} color="#fb923c" /> <div><h4>Combo-Streaks</h4><p>Multiplikatoren (bis zu 3x!) bei Serien.</p></div></div>
-                <div className="rule-item"><Compass size={24} color="var(--accent)" /> <div><h4>Entdecker-Bonus</h4><p>Erhalte einmalig <strong>1000 Punkte</strong> beim ersten Mal finden!</p></div></div>
+                <div className="rule-item">
+                  <Target size={28} color="var(--accent)" /> 
+                  <div><h4>Basis-Punkte</h4><p>Erhalte <strong>500 Punkte</strong> pro korrekte Strasse.</p></div>
+                </div>
+                <div className="rule-item">
+                  <Clock size={28} color="var(--primary)" /> 
+                  <div><h4>Zeitlimit</h4><p>Du hast <strong>20 Sekunden</strong> pro Frage.</p></div>
+                </div>
+                <div className="rule-item">
+                  <Zap size={28} color="#4ade80" /> 
+                  <div><h4>Speed-Bonus</h4><p>Bis zu <strong>1000 Extra-Punkte</strong> für schnelle Antworten.</p></div>
+                </div>
+                <div className="rule-item">
+                  <Flame size={28} color="#fb923c" /> 
+                  <div><h4>Combo-Streaks</h4><p>Multiplikatoren (bis zu 3x!) bei Serien.</p></div>
+                </div>
+                <div className="rule-item">
+                  <Compass size={28} color="var(--accent)" /> 
+                  <div><h4>Entdecker-Bonus</h4><p>Erhalte einmalig <strong>1000 Punkte</strong> beim ersten Mal finden!</p></div>
+                </div>
               </div>
               <button className="primary-action-btn" onClick={() => { setShowRulesModal(false); startCompetition(); }}><Play size={20} fill="currentColor" /> JETZT STARTEN</button>
             </div>

@@ -150,12 +150,32 @@ main { flex: 1; position: relative; background: var(--bg); overflow: hidden; }
 @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .rules-modal {
-  background: var(--surface); width: 90%; max-width: 500px;
-  padding: 40px; border-radius: 32px; border: 1px solid var(--glass-border);
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5); text-align: center;
+  background: var(--surface); width: 95%; max-width: 650px;
+  padding: 40px; border-radius: 40px; border: 1px solid var(--glass-border);
+  box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7); text-align: left;
   animation: modalScaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative; overflow: hidden;
 }
-@keyframes modalScaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.rules-modal::before {
+  content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255, 82, 82, 0.05) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+@keyframes modalScaleIn { from { transform: scale(0.85) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+.modal-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; position: relative; z-index: 1; }
+.modal-header h2 { font-size: 2.2rem; font-weight: 900; margin: 0; letter-spacing: -0.04em; }
+
+.rules-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 35px; position: relative; z-index: 1; }
+.rule-item { 
+  display: flex; align-items: flex-start; gap: 20px; background: rgba(255, 255, 255, 0.03); 
+  padding: 20px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+.rule-item:hover { background: rgba(255, 255, 255, 0.06); transform: translateX(5px); border-color: rgba(255, 255, 255, 0.1); }
+.rule-item h4 { margin: 0 0 4px 0; font-size: 1rem; font-weight: 800; color: white; }
+.rule-item p { margin: 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
+.rule-item strong { color: white; }
 
 /* Timer */
 .timer-wrapper { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 260px; background: var(--glass-bg); padding: 6px 12px; border-radius: 20px; z-index: 1000; border: 1px solid var(--glass-border); display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }

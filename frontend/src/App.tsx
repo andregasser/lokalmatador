@@ -1,36 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Polyline, Tooltip, useMap, LayersControl } from 'react-leaflet';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { MapContainer, TileLayer, Polyline, Tooltip, useMap, LayersControl, CircleMarker } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
 import 'leaflet-defaulticon-compatibility';
-import { fetchBassersdorfStreets } from './osmService';
-import type { Street } from './osmService';
+import { fetchBassersdorfStreets, fetchBassersdorfHydrants } from './osmService';
+import type { Street, Hydrant } from './osmService';
 import './App.css';
 import { useTranslation } from 'react-i18next';
 import confetti from 'canvas-confetti';
 import { 
-  BookOpen, 
-  Trophy, 
-  LayoutList, 
-  History, 
-  LogOut, 
-  Languages, 
-  Map as MapIcon, 
-  CheckCircle2, 
-  XCircle,
-  ChevronRight,
-  Play,
-  Zap,
-  Target,
-  Clock,
-  Flame,
-  Moon,
-  Star,
-  ShieldCheck,
-  Compass,
-  Medal,
-  ShieldAlert,
-  User as UserIcon
+  BookOpen, Trophy, LayoutList, History, LogOut, Languages, 
+  Map as MapIcon, CheckCircle2, XCircle, ChevronRight, Play, Zap, 
+  Target, Clock, Flame, Moon, Star, ShieldCheck, Compass, Medal, 
+  ShieldAlert, User as UserIcon, Droplets, EyeOff
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -79,10 +62,36 @@ const MapResizer = () => {
   return null;
 };
 
+const MapTracker = ({ setZoom, setBounds }: { setZoom: (z: number) => void, setBounds: (b: L.LatLngBounds) => void }) => {
+  const map = useMap();
+  const timeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = window.setTimeout(() => {
+        setZoom(map.getZoom());
+        setBounds(map.getBounds());
+      }, 100);
+    };
+    map.on('zoomend moveend', update);
+    // Initial state
+    setZoom(map.getZoom());
+    setBounds(map.getBounds());
+    return () => { 
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+      map.off('zoomend moveend', update); 
+    };
+  }, [map, setZoom, setBounds]);
+  return null;
+};
+
 const App: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
   const [streets, setStreets] = useState<Street[]>([]);
+  const [hydrants, setHydrants] = useState<Hydrant[]>([]);
+  const [showHydrants, setShowHydrants] = useState(false);
   const [mode, setMode] = useState<'learn' | 'compete' | 'leaderboard' | 'release_notes'>('learn');
   const [loading, setLoading] = useState(true);
   const [selectedStreetId, setSelectedStreetId] = useState<string | null>(null);
@@ -102,59 +111,43 @@ const App: React.FC = () => {
   const [knownStreetIds, setKnownStreetIds] = useState<string[]>([]);
   const [isEmergencyActive, setIsEmergencyActive] = useState(false);
   const [lastDiscoveryBonus, setLastDiscoveryBonus] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(15);
+  const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
     const savedAchievements = JSON.parse(localStorage.getItem(`achievements_${user}`) || '[]');
     setUnlockedAchievements(savedAchievements);
-
     const savedKnown = JSON.parse(localStorage.getItem(`known_streets_${user}`) || '[]');
     setKnownStreetIds(savedKnown);
 
-    const rawLeaderboard = localStorage.getItem('leaderboard');
-    if (rawLeaderboard) {
-      try {
-        const leaderboard = JSON.parse(rawLeaderboard);
-        const migrated = leaderboard.map((entry: any) => {
-          if (entry.date && !entry.date.includes(':')) {
-            return { ...entry, date: `${entry.date}, 12:00:00` };
-          }
-          return entry;
-        });
-        localStorage.setItem('leaderboard', JSON.stringify(migrated));
-      } catch (e) { console.error(e); }
-    }
-
-    const loadStreets = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
-        const data = await fetchBassersdorfStreets();
-        setStreets(data);
+        const [streetData, hydrantData] = await Promise.all([
+          fetchBassersdorfStreets(),
+          fetchBassersdorfHydrants()
+        ]);
+        setStreets(streetData);
+        setHydrants(hydrantData);
       } catch (err) {
-        console.error("Failed to load streets:", err);
+        console.error("Failed to load data:", err);
       } finally {
         setLoading(false);
       }
     };
-    loadStreets();
+    loadData();
   }, [user]);
 
   useEffect(() => {
     if (isTimerActive && timeLeft > 0) {
-      timerRef.current = window.setInterval(() => {
-        setTimeLeft((prev) => prev - 0.1);
-      }, 100);
+      timerRef.current = window.setInterval(() => { setTimeLeft((prev) => prev - 0.1); }, 100);
     } else if (timeLeft <= 0 && isTimerActive) {
       handleAnswer(""); 
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isTimerActive, timeLeft]);
-
-  const triggerEmergencyEffect = () => {
-    setIsEmergencyActive(true);
-    setTimeout(() => setIsEmergencyActive(false), 3000);
-  };
 
   const unlockAchievement = (id: string) => {
     if (!unlockedAchievements.includes(id)) {
@@ -194,10 +187,7 @@ const App: React.FC = () => {
     setLastDiscoveryBonus(false);
     setTimeLeft(QUESTION_TIME_LIMIT);
     const correct = streets[Math.floor(Math.random() * streets.length)];
-    const distractors = streets
-      .filter(s => s.name !== correct.name)
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 3);
+    const distractors = streets.filter(s => s.name !== correct.name).sort(() => 0.5 - Math.random()).slice(0, 3);
     const allOptions = [correct.name, ...distractors.map(s => s.name)].sort(() => 0.5 - Math.random());
     setCurrentStreet(correct);
     setOptions(allOptions);
@@ -251,6 +241,31 @@ const App: React.FC = () => {
       const userTotalScore = leaderboard.filter((entry: any) => entry.user === user).reduce((sum: number, entry: any) => sum + entry.score, 0);
       if (userTotalScore >= 100000) unlockAchievement('local_hero');
     }
+  };
+
+  const visibleHydrants = useMemo(() => {
+    if (!showHydrants || !mapBounds) return [];
+    return hydrants.filter(h => mapBounds.contains([h.lat, h.lon]));
+  }, [hydrants, mapBounds, showHydrants]);
+
+  const visibleStreets = useMemo(() => {
+    if (!mapBounds) return streets;
+    const bufferedBounds = mapBounds.pad(0.1);
+    return streets.filter(s => {
+      // Fast check: is the entire street outside the visible bounds?
+      const streetBounds = L.latLngBounds(s.coordinates.flat());
+      if (!bufferedBounds.intersects(streetBounds)) return false;
+      
+      // Detailed check: do any actual segments intersect?
+      return s.coordinates.some(path => {
+        return path.some(coord => bufferedBounds.contains(coord));
+      });
+    });
+  }, [streets, mapBounds]);
+
+  const triggerEmergencyEffect = () => {
+    setIsEmergencyActive(true);
+    setTimeout(() => setIsEmergencyActive(false), 2000);
   };
 
   const changeLanguage = (lng: string) => { i18n.changeLanguage(lng); };
@@ -310,22 +325,17 @@ const App: React.FC = () => {
       </header>
 
       <main>
-        {loading && (
-          <div className="map-loading-overlay">
-            <div className="spinner"></div>
-            <p>{t('loading')}</p>
-          </div>
-        )}
+        {loading && (<div className="map-loading-overlay"><div className="spinner"></div><p>{t('loading')}</p></div>)}
 
         {showRulesModal && (
           <div className="modal-overlay">
             <div className="rules-modal">
               <div className="modal-header"><Zap size={32} color="var(--primary)" /> <h2>Wettkampfregeln</h2></div>
               <div className="rules-grid">
-                <div className="rule-item"><Target size={24} color="var(--accent)" /> <div><h4>Basis-Punkte</h4><p>Erhalte <strong>500 Punkte</strong> für jede korrekte Strasse.</p></div></div>
-                <div className="rule-item"><Clock size={24} color="var(--primary)" /> <div><h4>Zeitlimit</h4><p>Du hast <strong>20 Sekunden</strong> pro Frage. Beeil dich!</p></div></div>
+                <div className="rule-item"><Target size={24} color="var(--accent)" /> <div><h4>Basis-Punkte</h4><p>Erhalte <strong>500 Punkte</strong> pro korrekte Strasse.</p></div></div>
+                <div className="rule-item"><Clock size={24} color="var(--primary)" /> <div><h4>Zeitlimit</h4><p>Du hast <strong>20 Sekunden</strong> pro Frage.</p></div></div>
                 <div className="rule-item"><Zap size={24} color="#4ade80" /> <div><h4>Speed-Bonus</h4><p>Bis zu <strong>1000 Extra-Punkte</strong> für schnelle Antworten.</p></div></div>
-                <div className="rule-item"><Flame size={24} color="#fb923c" /> <div><h4>Combo-Streaks</h4><p>Multiplikatoren (bis zu 3x!) bei richtigen Serien.</p></div></div>
+                <div className="rule-item"><Flame size={24} color="#fb923c" /> <div><h4>Combo-Streaks</h4><p>Multiplikatoren (bis zu 3x!) bei Serien.</p></div></div>
                 <div className="rule-item"><Compass size={24} color="var(--accent)" /> <div><h4>Entdecker-Bonus</h4><p>Erhalte einmalig <strong>1000 Punkte</strong> beim ersten Mal finden!</p></div></div>
               </div>
               <button className="primary-action-btn" onClick={() => { setShowRulesModal(false); startCompetition(); }}><Play size={20} fill="currentColor" /> JETZT STARTEN</button>
@@ -337,11 +347,13 @@ const App: React.FC = () => {
           <div className="map-container">
             <MapContainer key={`map-learn-${streets.length}`} center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
               <LayersControl position="topright">
-                <LayersControl.BaseLayer checked name={t('map_osm')}><TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={22} maxNativeZoom={19} className="leaflet-dark" /></LayersControl.BaseLayer>
+                <LayersControl.BaseLayer checked name={t('map_osm')}>
+                  <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution='&copy; OSM' maxZoom={22} />
+                </LayersControl.BaseLayer>
                 <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
               </LayersControl>
-              <MapResizer />
-              {streets.map(s => (
+              <MapResizer /><MapTracker setZoom={setCurrentZoom} setBounds={setMapBounds} />
+              {visibleStreets.map(s => (
                 <React.Fragment key={s.id}>
                   {s.coordinates.map((path, idx) => (
                     <Polyline 
@@ -352,15 +364,21 @@ const App: React.FC = () => {
                       }}
                       eventHandlers={{ click: () => setSelectedStreetId(s.id) }} interactive={true}
                     >
-                      <Tooltip permanent={false}>{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
+                      <Tooltip permanent={false} className="street-tooltip">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
                     </Polyline>
                   ))}
                 </React.Fragment>
               ))}
+              {visibleHydrants.map(h => (
+                <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#38bdf8', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}>
+                  <Tooltip className="street-tooltip">Hydrant #{h.id}</Tooltip>
+                </CircleMarker>
+              ))}
             </MapContainer>
+            <button className="hydrant-toggle-btn" onClick={() => setShowHydrants(!showHydrants)}>{showHydrants ? <EyeOff size={20} /> : <Droplets size={20} />}<span>{showHydrants ? "Hydranten aus" : "Hydranten ein"}</span></button>
             <div className="overlay-info">
               <div className="overlay-text"><BookOpen size={18} /> {t('learn_overlay')}</div>
-              <div className="map-legend"><div className="legend-item"><span className="dot known"></span> {t('legend_known')}</div><div className="legend-item"><span className="dot unknown"></span> {t('legend_unknown')}</div></div>
+              <div className="map-legend"><div className="legend-item"><span className="dot known"></span> {t('legend_known')}</div><div className="legend-item"><span className="dot unknown"></span> {t('legend_unknown')}</div><div className="legend-item"><span className="dot hydrant"></span> Hydrant</div></div>
             </div>
           </div>
         )}
@@ -382,11 +400,21 @@ const App: React.FC = () => {
             <div className="map-container mini-map">
               <MapContainer key={`map-compete-${currentStreet.id}`} center={BASSERSDORF_CENTER} zoom={17} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <LayersControl position="topright">
-                  <LayersControl.BaseLayer checked name={t('map_stumm')}><TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png" attribution='&copy; OSM' maxZoom={22} maxNativeZoom={19} className="leaflet-dark" /></LayersControl.BaseLayer>
+                  <LayersControl.BaseLayer checked name={t('map_stumm')}>
+                    <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution='&copy; OSM' maxZoom={22} />
+                  </LayersControl.BaseLayer>
                   <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
                 </LayersControl>
-                {currentStreet.coordinates.map((path, idx) => (<Polyline key={idx} positions={path} pathOptions={{ color: "var(--primary)", className: "pulse-line" }} />))}
-                <MapFocus coords={currentStreet.coordinates} /><MapResizer />
+                <MapResizer /><MapTracker setZoom={setCurrentZoom} setBounds={setMapBounds} />
+                {currentStreet.coordinates.map((path, idx) => (
+                  <Polyline key={idx} positions={path} pathOptions={{ color: "var(--primary)", className: "pulse-line" }} />
+                ))}
+                {visibleHydrants.map(h => (
+                  <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#38bdf8', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}>
+                    <Tooltip className="street-tooltip">Hydrant #{h.id}</Tooltip>
+                  </CircleMarker>
+                ))}
+                <MapFocus coords={currentStreet.coordinates} />
               </MapContainer>
             </div>
             <div className="quiz-controls">
@@ -479,19 +507,17 @@ const App: React.FC = () => {
                 <div className="section-header"><History size={32} className="text-primary" /> <h2>{t('release_notes')}</h2></div>
                 <div className="release-list">
                   <div className="release-item">
-                    <div className="version-badge">v1.6.0</div>
-                    <h3>Hall of Fame Redesign</h3>
+                    <div className="version-badge">v1.9.0</div>
+                    <h3>House Numbers Integrated</h3>
                     <ul>
-                      <li>🏆 **Podium View**: Die Top 3 werden jetzt prunkvoll auf dem Podium präsentiert.</li>
-                      <li>🏅 **Medaillen**: Gold, Silber und Bronze für die Champions.</li>
+                      <li>🏠 **Always Visible**: Hausnummern werden nun permanent auf der Karte angezeigt (ab Zoom-Level 18).</li>
                     </ul>
                   </div>
                   <div className="release-item">
-                    <div className="version-badge">v1.5.0</div>
-                    <h3>Street Master System</h3>
+                    <div className="version-badge">v1.8.0</div>
+                    <h3>Map Refinement</h3>
                     <ul>
-                      <li>🧭 **Entdecker-Bonus**: +1000 Punkte für jede zum ersten Mal erkannte Strasse.</li>
-                      <li>📈 **Gebietskenntnis**: Verfolge deinen Fortschritt im Header (0-100%).</li>
+                      <li>🗺️ **Consistent Map**: Lern- und Wettkampfmodus nutzen den identischen CartoDB Voyager Stil.</li>
                     </ul>
                   </div>
                 </div>

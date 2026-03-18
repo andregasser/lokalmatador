@@ -4,48 +4,58 @@ export interface Street {
   coordinates: [number, number][][];
 }
 
+export interface Hydrant {
+  id: number;
+  lat: number;
+  lon: number;
+}
+
+const OVERPASS_ENDPOINTS = [
+  "https://overpass.osm.ch/api/interpreter",
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter"
+];
+
+async function fetchFromOverpass(query: string): Promise<any> {
+  let lastError: Error | null = null;
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      if (!response.ok) continue;
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) continue;
+      return await response.json();
+    } catch (error) {
+      lastError = error as Error;
+    }
+  }
+  throw lastError || new Error("All Overpass API endpoints failed.");
+}
+
 export async function fetchBassersdorfStreets(): Promise<Street[]> {
   const query = `
     [out:json][timeout:60];
     area["name"="Bassersdorf"]["admin_level"="8"]->.searchArea;
     (
-      // Extended list of street types, including named service and footpaths
       way["highway"~"^(primary|secondary|tertiary|residential|unclassified|living_street|service|pedestrian|path|track)$"]["name"](area.searchArea);
-      
-      // Relations that explicitly group streets
       relation["type"~"^(associatedStreet|street)$"]["name"](area.searchArea);
     );
     out body;
     >;
     out skel qt;
   `;
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-
   try {
-    const response = await fetch(url);
-    const data = await response.json();
-
+    const data = await fetchFromOverpass(query);
+    if (!data || !data.elements) return [];
     const nodes: Record<number, [number, number]> = {};
     const ways: Record<number, { id: number, name?: string, nodes: number[], highway?: string }> = {};
     const relations: { name: string, members: { type: string, ref: number, role?: string }[] }[] = [];
 
-    // First pass: collect data
     data.elements.forEach((el: any) => {
-      if (el.type === 'node') {
-        nodes[el.id] = [el.lat, el.lon];
-      } else if (el.type === 'way') {
-        ways[el.id] = { 
-          id: el.id,
-          name: el.tags?.name, 
-          nodes: el.nodes,
-          highway: el.tags?.highway
-        };
-      } else if (el.type === 'relation' && el.tags?.name) {
-        relations.push({
-          name: el.tags.name,
-          members: el.members
-        });
-      }
+      if (el.type === 'node') nodes[el.id] = [el.lat, el.lon];
+      else if (el.type === 'way') ways[el.id] = { id: el.id, name: el.tags?.name, nodes: el.nodes, highway: el.tags?.highway };
+      else if (el.type === 'relation' && el.tags?.name) relations.push({ name: el.tags.name, members: el.members });
     });
 
     const grouped: Record<string, [number, number][][]> = {};
@@ -54,12 +64,7 @@ export async function fetchBassersdorfStreets(): Promise<Street[]> {
     const addWayToStreet = (name: string, wayId: number) => {
       const way = ways[wayId];
       if (!way) return;
-
-      if (!processedWayIdsPerStreet[name]) {
-        processedWayIdsPerStreet[name] = new Set();
-      }
-
-      // Check if this segment has already been added for THIS street
+      if (!processedWayIdsPerStreet[name]) processedWayIdsPerStreet[name] = new Set();
       if (!processedWayIdsPerStreet[name].has(wayId)) {
         const coords = way.nodes.map(id => nodes[id]).filter((n): n is [number, number] => !!n);
         if (coords.length >= 2) {
@@ -70,36 +75,24 @@ export async function fetchBassersdorfStreets(): Promise<Street[]> {
       }
     };
 
-    // 1. Process ways that have a direct name
-    Object.values(ways).forEach(way => {
-      if (way.name) {
-        addWayToStreet(way.name, way.id);
+    Object.values(ways).forEach(way => { if (way.name) addWayToStreet(way.name, way.id); });
+    relations.forEach(rel => rel.members.forEach(member => {
+      if (member.type === 'way') {
+        const way = ways[member.ref];
+        if (way && (!way.name || way.name === rel.name)) addWayToStreet(rel.name, member.ref);
       }
-    });
-
-    // 2. Assign unnamed ways via relations
-    relations.forEach(rel => {
-      rel.members.forEach(member => {
-        if (member.type === 'way') {
-          const way = ways[member.ref];
-          // Only add if the way has no other name OR already carries the relation's name
-          if (way && (!way.name || way.name === rel.name)) {
-            addWayToStreet(rel.name, member.ref);
-          }
-        }
-      });
-    });
-
-    const result: Street[] = Object.entries(grouped).map(([name, paths], index) => ({
-      id: `street-${index}`,
-      name: name,
-      coordinates: paths
     }));
 
-    console.log(`Updated OSM data: ${result.length} streets processed including service paths.`);
-    return result;
-  } catch (error) {
-    console.error("Error fetching OSM data:", error);
-    return [];
-  }
+    return Object.entries(grouped).map(([name, paths], index) => ({ id: `street-${index}`, name: name, coordinates: paths }));
+  } catch (error) { return []; }
 }
+
+export async function fetchBassersdorfHydrants(): Promise<Hydrant[]> {
+  const query = `[out:json][timeout:30]; area["name"="Bassersdorf"]["admin_level"="8"]->.searchArea; (node["emergency"="fire_hydrant"](area.searchArea);); out body;`;
+  try {
+    const data = await fetchFromOverpass(query);
+    if (!data || !data.elements) return [];
+    return data.elements.map((el: any) => ({ id: el.id, lat: el.lat, lon: el.lon }));
+  } catch (error) { return []; }
+}
+

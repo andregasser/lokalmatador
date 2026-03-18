@@ -1,0 +1,14 @@
+{
+  "name": "lokalmatador-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "AWS_PROFILE=private sst dev",
+    "deploy": "AWS_PROFILE=private sst deploy --stage production",
+    "remove": "AWS_PROFILE=private sst remove --stage production"
+  },
+  "devDependencies": {
+    "sst": "latest",
+    "typescript": "^5.0.0"
+  }
+}

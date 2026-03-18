@@ -13,7 +13,8 @@ import {
   BookOpen, Trophy, LayoutList, History, LogOut, Languages, 
   Map as MapIcon, CheckCircle2, XCircle, ChevronRight, Play, Zap, 
   Target, Clock, Flame, Moon, Star, ShieldCheck, Compass, Medal, 
-  ShieldAlert, User as UserIcon, Droplets, EyeOff
+  ShieldAlert, User as UserIcon, Droplets, EyeOff, Sun, Infinity,
+  Award, Footprints, Flag
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -30,11 +31,16 @@ const RANKS = [
 ];
 
 const ACHIEVEMENTS = [
-  { id: 'speed_demon', title: 'Blitz-Reaktion', desc: 'Antwort in unter 2 Sek.', icon: Zap, color: '#facc15' },
-  { id: 'perfect_round', title: 'Perfekter Einsatz', desc: '10/10 Punkte in einer Runde', icon: Star, color: '#fbbf24' },
-  { id: 'night_shift', title: 'Nachtschicht', desc: 'Spiele eine Runde nach 22:00 Uhr', icon: Moon, color: '#818cf8' },
-  { id: 'on_fire_7', title: 'Dauerbrenner', desc: 'Erreiche einen 7er Streak', icon: Flame, color: '#ff5252' },
-  { id: 'local_hero', title: 'Ehrenbürger', desc: 'Erreiche 100.000 Gesamtpunkte', icon: ShieldCheck, color: '#4ade80' }
+  { id: 'speed_demon', title: 'speed_demon_title', desc: 'speed_demon_desc', icon: Zap, color: '#facc15' },
+  { id: 'perfect_round', title: 'perfect_round_title', desc: 'perfect_round_desc', icon: Star, color: '#fbbf24' },
+  { id: 'night_shift', title: 'night_shift_title', desc: 'night_shift_desc', icon: Moon, color: '#818cf8' },
+  { id: 'early_bird', title: 'early_bird_title', desc: 'early_bird_desc', icon: Sun, color: '#fde047' },
+  { id: 'on_fire_7', title: 'on_fire_7_title', desc: 'on_fire_7_desc', icon: Flame, color: '#ff5252' },
+  { id: 'streak_10', title: 'streak_10_title', desc: 'streak_10_desc', icon: Infinity, color: '#a855f7' },
+  { id: 'high_score_round', title: 'high_score_round_title', desc: 'high_score_round_desc', icon: Award, color: '#3b82f6' },
+  { id: 'marathon', title: 'marathon_title', desc: 'marathon_desc', icon: Footprints, color: '#f97316' },
+  { id: 'master_explorer', title: 'master_explorer_title', desc: 'master_explorer_desc', icon: Flag, color: '#10b981' },
+  { id: 'local_hero', title: 'local_hero_title', desc: 'local_hero_desc', icon: ShieldCheck, color: '#4ade80' }
 ];
 
 const getRank = (totalScore: number) => {
@@ -113,6 +119,7 @@ const App: React.FC = () => {
   const [lastDiscoveryBonus, setLastDiscoveryBonus] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(15);
   const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
+  const [roundsPlayedInSession, setRoundsPlayedInSession] = useState(0);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -204,6 +211,7 @@ const App: React.FC = () => {
     const newStreak = isCorrect ? streak + 1 : 0;
     setStreak(newStreak);
     if (newStreak >= 7) unlockAchievement('on_fire_7');
+    if (newStreak >= 10) unlockAchievement('streak_10');
     let multiplier = 1;
     if (newStreak >= 10) multiplier = 3;
     else if (newStreak >= 5) multiplier = 2;
@@ -215,6 +223,7 @@ const App: React.FC = () => {
       const updatedKnown = [...knownStreetIds, currentStreet.id];
       setKnownStreetIds(updatedKnown);
       localStorage.setItem(`known_streets_${user}`, JSON.stringify(updatedKnown));
+      if (updatedKnown.length >= 100) unlockAchievement('master_explorer');
     }
     const timeBonus = isCorrect ? Math.floor(timeLeft * 100) : 0;
     const basePoints = isCorrect ? 500 : 0;
@@ -229,12 +238,20 @@ const App: React.FC = () => {
     if (totalQuestions >= 10) {
       const finalCorrectCount = isCorrect ? correctCount + 1 : correctCount;
       const finalScore = score + roundPoints;
+      
+      const newRoundsCount = roundsPlayedInSession + 1;
+      setRoundsPlayedInSession(newRoundsCount);
+      if (newRoundsCount >= 5) unlockAchievement('marathon');
+      if (finalScore >= 15000) unlockAchievement('high_score_round');
+
       if (finalCorrectCount === 10) {
         unlockAchievement('perfect_round');
         confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 } });
       }
       const hour = new Date().getHours();
       if (hour >= 22 || hour < 5) unlockAchievement('night_shift');
+      if (hour >= 5 && hour < 9) unlockAchievement('early_bird');
+      
       const leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
       leaderboard.push({ user, score: finalScore, date: new Date().toLocaleString() });
       localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
@@ -506,14 +523,13 @@ const App: React.FC = () => {
                   {ACHIEVEMENTS.map(ach => {
                     const isUnlocked = unlockedAchievements.includes(ach.id);
                     return (
-                      <div key={ach.id} className={`achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}`} title={ach.desc}>
+                      <div key={ach.id} className={`achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}`} title={t(ach.desc)}>
                         <ach.icon size={24} color={isUnlocked ? ach.color : '#475569'} />
-                        <span className="badge-name">{ach.title}</span>
+                        <span className="badge-name">{t(ach.title)}</span>
                       </div>
                     );
                   })}
-                </div>
-                <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
+                </div>                <button onClick={() => setMode('learn')} className="back-btn">{t('back_to_learn')}</button>
               </div>
             )}
 

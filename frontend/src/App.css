@@ -218,8 +218,18 @@ tr.highlight td { background: rgba(56, 189, 248, 0.08); color: var(--accent); }
 .version-badge { background: var(--primary); color: white; display: inline-block; padding: 5px 14px; border-radius: 8px; font-weight: 900; font-size: 0.75rem; margin-bottom: 12px; }
 
 /* Achievements */
-.achievements-shelf { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; background: var(--surface); padding: 30px; border-radius: 32px; margin-bottom: 2rem; border: 1px solid var(--glass-border); }
-.achievement-badge { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 110px; transition: all 0.3s ease; }
+.achievements-shelf { 
+  display: grid; 
+  grid-template-columns: repeat(5, 1fr); 
+  gap: 25px; 
+  background: var(--surface); 
+  padding: 40px; 
+  border-radius: 32px; 
+  margin-bottom: 2rem; 
+  border: 1px solid var(--glass-border); 
+  justify-items: center;
+}
+.achievement-badge { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; transition: all 0.3s ease; }
 .achievement-badge.locked { filter: grayscale(1) opacity(0.2); }
 .achievement-badge.unlocked { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1)); }
 .badge-name { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); text-align: center; }
@@ -293,4 +303,5 @@ tr.highlight td { background: rgba(56, 189, 248, 0.08); color: var(--accent); }
   .rank-1 { order: 1; } .rank-2 { order: 2; } .rank-3 { order: 3; }
   .login-container h1 { font-size: 2.8rem; }
   .options-grid { grid-template-columns: 1fr !important; }
+  .achievements-shelf { grid-template-columns: repeat(2, 1fr); padding: 20px; gap: 15px; }
 }

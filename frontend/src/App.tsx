@@ -222,9 +222,9 @@ const App: React.FC = () => {
     if (isCorrect) {
       setScore(prev => prev + roundPoints);
       setCorrectCount(prev => prev + 1);
-      setFeedback(t('correct'));
+      setFeedback('correct');
     } else {
-      setFeedback(option === "" ? "Zeit abgelaufen!" : t('wrong', { name: currentStreet?.name }));
+      setFeedback(option === "" ? "time_expired" : "wrong");
     }
     if (totalQuestions >= 10) {
       const finalCorrectCount = isCorrect ? correctCount + 1 : correctCount;
@@ -435,15 +435,15 @@ const App: React.FC = () => {
             <div className="quiz-controls">
               {feedback ? (
                 <div className="feedback-overlay-content">
-                  <div className={`feedback-card ${feedback === t('correct') ? 'success' : 'error'}`}>
-                    <div className="feedback-icon-container">{feedback === t('correct') ? <CheckCircle2 size={64} className="icon-pulse" /> : <XCircle size={64} className="icon-shake" />}</div>
+                  <div className={`feedback-card ${feedback === 'correct' ? 'success' : 'error'}`}>
+                    <div className="feedback-icon-container">{feedback === 'correct' ? <CheckCircle2 size={64} className="icon-pulse" /> : <XCircle size={64} className="icon-shake" />}</div>
                     <div className="feedback-text-content">
-                      <h2 className="feedback-status">{feedback === t('correct') ? t('correct') : (timeLeft <= 0 ? "Zeit abgelaufen!" : "Falsch!")}</h2>
-                      {feedback !== t('correct') && <p className="correct-answer-reveal">Korrekt ist {currentStreet?.name}</p>}
-                      {feedback === t('correct') && (
+                      <h2 className="feedback-status">{t(feedback)}</h2>
+                      {feedback !== 'correct' && <p className="correct-answer-reveal">{t('correct_is', { name: currentStreet?.name })}</p>}
+                      {feedback === 'correct' && (
                         <div className="bonus-container">
-                          {streak >= 3 && <p className="streak-feedback">STREAK: {streak} 🔥</p>}
-                          {lastDiscoveryBonus && <p className="discovery-feedback">+1000 ENTDECKER-BONUS! 🧭</p>}
+                          {streak >= 3 && <p className="streak-feedback">{t('streak_bonus', { count: streak })}</p>}
+                          {lastDiscoveryBonus && <p className="discovery-feedback">{t('discovery_bonus_label')}</p>}
                         </div>
                       )}
                     </div>

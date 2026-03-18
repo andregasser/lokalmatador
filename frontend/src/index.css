@@ -1,21 +1,79 @@
-/* Reset default Vite styles to allow full width */
+@import "tailwindcss";
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --primary: #ff5252;
+  --primary-glow: rgba(255, 82, 82, 0.4);
+  --secondary: #0f172a;
+  --surface: #1e293b;
+  --accent: #38bdf8;
+  --bg: #0f172a;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --glass-bg: rgba(30, 41, 59, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
 }
 
-body, html {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+@theme {
+  --color-primary: var(--primary);
+  --color-primary-glow: var(--primary-glow);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-text-muted: var(--text-muted);
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
 }
 
-#root {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
+body, html, #root {
+  margin: 0; padding: 0;
+  height: 100%; width: 100%;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
+
+/* Leaflet Overrides & Custom Animations */
+.leaflet-container { height: 100% !important; width: 100% !important; background: #1e293b !important; outline: none; }
+.leaflet-dark { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+
+.leaflet-tooltip.street-tooltip {
+  @apply bg-surface border border-glass-border rounded-xl shadow-2xl text-white px-4 py-2 font-bold text-sm;
+  text-shadow: none !important;
+}
+.leaflet-tooltip.street-tooltip:before { border-color: transparent !important; }
+
+.pulse-line {
+  stroke-dasharray: 12;
+  stroke-width: 10;
+  stroke-opacity: 1;
+  animation: dash 30s linear infinite;
+}
+@keyframes dash { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+
+@keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalScaleIn { from { transform: scale(0.85) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+.animate-modal-fade { animation: modalFadeIn 0.3s ease-out; }
+.animate-modal-scale { animation: modalScaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+/* Emergency Lights */
+.emergency-lights { animation: emergencyFlash 0.5s infinite; }
+@keyframes emergencyFlash {
+  0%, 100% { box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.4); }
+  50% { box-shadow: inset 0 0 100px rgba(0, 0, 255, 0.4); }
+}
+
+.icon-pulse { @apply text-[#4ade80]; animation: iconPulse 2s infinite; }
+.icon-shake { @apply text-primary; animation: iconShake 0.5s ease-in-out; }
+@keyframes iconPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+@keyframes iconShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+@keyframes float { from { transform: translate(0, 0); } to { transform: translate(50px, 50px); } }
+.animate-float { animation: float 10s infinite alternate; }
+.animate-float-reverse { animation: float 15s infinite alternate-reverse; }
+
+@keyframes loginFadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+.animate-login-fade { animation: loginFadeIn 0.8s ease-out; }

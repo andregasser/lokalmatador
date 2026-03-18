@@ -92,6 +92,17 @@ const MapTracker = ({ setZoom, setBounds }: { setZoom: (z: number) => void, setB
   return null;
 };
 
+const LanguageSwitcher = ({ current, onChange }: { current: string, onChange: (lng: string) => void }) => (
+  <div className="language-toggle">
+    <button className={current === 'de' ? 'active' : ''} onClick={() => onChange('de')}>
+      <span className="flag">🇩🇪</span> <span className="label">DE</span>
+    </button>
+    <button className={current === 'en' ? 'active' : ''} onClick={() => onChange('en')}>
+      <span className="flag">🇬🇧</span> <span className="label">EN</span>
+    </button>
+  </div>
+);
+
 const App: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
@@ -302,7 +313,9 @@ const App: React.FC = () => {
         <div className="login-content">
           <div className="login-hero"><ShieldAlert size={80} color="var(--primary)" className="hero-icon-main" /><h1>{t('app_title')}</h1><p className="hero-subtitle">{t('login_desc')}</p></div>
           <form className="login-form-modern" onSubmit={handleLogin}><div className="input-wrapper-modern"><UserIcon size={20} className="input-icon" /><input name="username" placeholder={t('username')} required autoComplete="off" /></div><button type="submit" className="login-submit-btn"><span>{t('login')}</span><ChevronRight size={20} /></button></form>
-          <div className="lang-select-wrapper-modern"><Languages size={18} /><select className="lang-select-login-modern" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}><option value="de">Deutsch</option><option value="en">English</option></select></div>
+          <div className="lang-select-wrapper-modern">
+            <LanguageSwitcher current={i18n.language} onChange={changeLanguage} />
+          </div>
         </div>
       </div>
     );
@@ -325,11 +338,7 @@ const App: React.FC = () => {
           </div>
           <div className="header-divider"></div>
           <div className="lang-select-wrapper-header">
-            <Languages size={18} color="var(--text-muted)" />
-            <select className="lang-select-header" value={i18n.language} onChange={(e) => changeLanguage(e.target.value)}>
-              <option value="de">DE</option>
-              <option value="en">EN</option>
-            </select>
+            <LanguageSwitcher current={i18n.language} onChange={changeLanguage} />
           </div>
         </div>
         <nav>

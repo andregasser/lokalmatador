@@ -65,13 +65,41 @@ header {
 
 .header-divider { width: 1px; height: 20px; background: var(--glass-border); margin: 0 8px; }
 
-.lang-select-wrapper-header { display: flex; align-items: center; gap: 8px; }
-.lang-select-header {
-  background: transparent; border: 1px solid var(--glass-border);
-  color: var(--text-muted); padding: 4px 6px; border-radius: 8px;
-  cursor: pointer; font-size: 0.75rem; font-weight: 700; outline: none;
+/* Language Switcher */
+.language-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  gap: 4px;
 }
-.lang-select-header option { background-color: var(--surface); color: white; }
+.language-toggle button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+.language-toggle button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+.language-toggle button.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+.flag { font-size: 1.1rem; }
+
+.lang-select-wrapper-header { display: flex; align-items: center; }
 
 nav { display: flex; gap: 8px; }
 nav button {
@@ -284,8 +312,7 @@ tr.highlight td { background: rgba(56, 189, 248, 0.08); color: var(--accent); }
 .login-form-modern input { width: 100%; padding: 18px 18px 18px 50px; border-radius: 16px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border); color: white; font-size: 1rem; font-weight: 600; outline: none; }
 .login-submit-btn { padding: 18px; background: var(--primary); color: white; border: none; border-radius: 16px; cursor: pointer; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s; box-shadow: 0 10px 20px -5px var(--primary-glow); }
 .login-submit-btn:hover { transform: translateY(-3px); filter: brightness(1.1); }
-.lang-select-wrapper-modern { margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text-muted); font-weight: 600; }
-.lang-select-login-modern { background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); padding: 6px 12px; border-radius: 10px; cursor: pointer; }
+.lang-select-wrapper-modern { margin-top: 30px; display: flex; align-items: center; justify-content: center; }
 
 .back-btn { margin-top: 2rem; background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
 

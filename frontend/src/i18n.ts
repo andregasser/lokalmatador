@@ -69,21 +69,7 @@ const resources = {
       "master_explorer_title": "Bassersdorf-Experte",
       "master_explorer_desc": "Kenne mindestens 100 Strassen",
       "local_hero_title": "Ehrenbürger",
-      "local_hero_desc": "Erreiche 100.000 Gesamtpunkte",
-      "rel_1_1_0_title": "Version 1.1.0",
-      "rel_1_1_0_items": [
-        "🌍 **Zweisprachigkeit**: Die App ist jetzt auf Deutsch und Englisch verfügbar.",
-        "🗺️ **Satellitenbilder**: Wechsel zwischen OSM-Karte und Esri-Satellitenansicht möglich.",
-        "🔍 **Zoom-Power**: Man kann nun deutlich näher an die Strassen heranzoomen (Level 22).",
-        "🕒 **Leaderboard-Details**: In der Bestenliste wird nun auch die Uhrzeit angezeigt.",
-        "📱 **Responsive Design**: Die App passt sich nun optimal an verschiedene Bildschirmgrössen an.",
-        "🛣️ **Bessere Daten**: Strassenabzweigungen (z.B. Obstgartenstrasse) werden nun lückenlos erfasst."
-      ],
-      "rel_1_0_0_title": "Version 1.0.0",
-      "rel_1_0_0_items": [
-        "🚀 Erster Release mit Lern- und Wettkampfmodus für Bassersdorf.",
-        "🥇 Lokales Leaderboard."
-      ]
+      "local_hero_desc": "Erreiche 100.000 Gesamtpunkte"
     }
   },
   en: {
@@ -152,21 +138,7 @@ const resources = {
       "master_explorer_title": "Bassersdorf Expert",
       "master_explorer_desc": "Know at least 100 streets",
       "local_hero_title": "Honorary Citizen",
-      "local_hero_desc": "Reach 100,000 total points",
-      "rel_1_1_0_title": "Version 1.1.0",
-      "rel_1_1_0_items": [
-        "🌍 **Multi-language**: The app is now available in German and English.",
-        "🗺️ **Satellite Imagery**: Toggle between OSM map and Esri satellite view.",
-        "🔍 **Zoom Power**: Deeper zoom level supported (up to level 22).",
-        "🕒 **Leaderboard Details**: Timestamps are now shown in the leaderboard.",
-        "📱 **Responsive Design**: Optimized for various screen sizes.",
-        "🛣️ **Better Data**: Improved road branch detection (e.g., Obstgartenstrasse)."
-      ],
-      "rel_1_0_0_title": "Version 1.0.0",
-      "rel_1_0_0_items": [
-        "🚀 Initial release with Learn and Competition modes for Bassersdorf.",
-        "🥇 Local leaderboard."
-      ]
+      "local_hero_desc": "Reach 100,000 total points"
     }
   }
 };

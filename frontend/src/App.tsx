@@ -92,18 +92,18 @@ const MapTracker = ({ setZoom, setBounds }: { setZoom: (z: number) => void, setB
 };
 
 const LanguageSwitcher = ({ current, onChange }: { current: string, onChange: (lng: string) => void }) => (
-  <div className="flex bg-white/5 p-1 rounded-xl border border-glass-border gap-1">
+  <div className="flex bg-white/5 p-1 rounded-xl border border-glass-border gap-1 text-white">
     <button 
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-extrabold text-[0.75rem] transition-all duration-200 cursor-pointer ${current === 'de' ? 'bg-primary text-white shadow-lg shadow-primary-glow' : 'text-text-muted hover:bg-white/5 hover:text-white'}`} 
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-extrabold text-[0.75rem] transition-all duration-200 cursor-pointer ${current === 'de' ? 'bg-primary shadow-lg shadow-primary-glow text-white' : 'text-text-muted hover:bg-white/5 hover:text-white'}`} 
       onClick={() => onChange('de')}
     >
-      <span className="text-lg">🇩🇪</span> <span>DE</span>
+      <span className="text-lg md:text-xl">🇩🇪</span> <span>DE</span>
     </button>
     <button 
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-extrabold text-[0.75rem] transition-all duration-200 cursor-pointer ${current === 'en' ? 'bg-primary text-white shadow-lg shadow-primary-glow' : 'text-text-muted hover:bg-white/5 hover:text-white'}`} 
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-extrabold text-[0.75rem] transition-all duration-200 cursor-pointer ${current === 'en' ? 'bg-primary shadow-lg shadow-primary-glow text-white' : 'text-text-muted hover:bg-white/5 hover:text-white'}`} 
       onClick={() => onChange('en')}
     >
-      <span className="text-lg">🇬🇧</span> <span>EN</span>
+      <span className="text-lg md:text-xl">🇬🇧</span> <span>EN</span>
     </button>
   </div>
 );
@@ -196,6 +196,8 @@ const App: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
+    setMode('learn');
+    setShowLanding(true);
   };
 
   const startCompetition = () => {
@@ -310,128 +312,200 @@ const App: React.FC = () => {
   const topThree = sortedLeaderboard.slice(0, 3);
   const restOfList = sortedLeaderboard.slice(3);
 
-  if (!user && showLanding) {
-    return (
-      <div className="w-full min-h-screen bg-[#0f172a] text-white">
-        <LandingPage onStart={() => setShowLanding(false)} />
+  // Common Release Notes Component to reuse
+  const ReleaseNotesContent = () => (
+    <div className="py-8 md:py-12 px-4 md:px-6 max-w-[900px] mx-auto text-white text-center">
+      <div className="flex items-center justify-center gap-3 md:gap-4 mb-8 md:mb-10 text-white">
+        <History size={28} className="text-primary md:w-8 md:h-8 text-white" /> 
+        <h2 className="text-[1.8rem] md:text-[2.5rem] font-black tracking-tight leading-none uppercase text-white">Release Notes</h2>
       </div>
-    );
-  }
+      
+      <div className="flex flex-col gap-6 md:gap-8 text-left text-white">
+        {/* v2.0.0 */}
+        <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl">
+          <div className="bg-primary text-white inline-block px-3 py-1 md:px-3.5 md:py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] mb-3 md:mb-4 uppercase tracking-wider">v2.0.0</div>
+          <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 md:mb-6 uppercase tracking-tight leading-tight">Mobile-First & UI Overhaul</h3>
+          <ul className="p-0 list-none flex flex-col gap-3 mt-4">
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">📱 **Mobile-First**: Complete interface overhaul for perfect usage on smartphones.</li>
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🎨 **Tailwind CSS**: Refactored to Tailwind CSS v4 for a modern and fast UI.</li>
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🏠 **Landing Page**: New informative home page explaining the mission.</li>
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">⚡ **Performance**: Radical reduction of map load through geographic filtering.</li>
+          </ul>
+        </div>
 
-  if (!user) {
+        {/* v1.2.0 */}
+        <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl">
+          <div className="bg-primary text-white inline-block px-3 py-1 md:px-3.5 md:py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] mb-3 md:mb-4 uppercase tracking-wider">v1.2.0</div>
+          <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 md:mb-6 uppercase tracking-tight leading-tight">Motivation & Languages</h3>
+          <ul className="p-0 list-none flex flex-col gap-3 mt-4">
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🏆 **More Achievements**: Added 5 new badges (Marathon, Early Bird, etc.).</li>
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🌐 **Full i18n**: All modals and feedback texts are now fully bilingual.</li>
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🚩 **Flag Switcher**: New visual language selector with flags.</li>
+          </ul>
+        </div>
+
+        {/* v1.1.0 */}
+        <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl">
+          <div className="bg-primary text-white inline-block px-3 py-1 md:px-3.5 md:py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] mb-3 md:mb-4 uppercase tracking-wider">v1.1.0</div>
+          <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 md:mb-6 uppercase tracking-tight leading-tight">Map Precision</h3>
+          <ul className="p-0 list-none flex flex-col gap-3 mt-4">
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🔍 **Zoom Level**: Support for deeper zoom up to level 22.</li>
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🗺️ **Map Style**: Consistent 'Voyager' look across all modes.</li>
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🕒 **Leaderboard**: Hall of Fame now displays date and time.</li>
+          </ul>
+        </div>
+
+        {/* v1.0.0 */}
+        <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl">
+          <div className="bg-primary text-white inline-block px-3 py-1 md:px-3.5 md:py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] mb-3 md:mb-4 uppercase tracking-wider">v1.0.0</div>
+          <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 md:mb-6 uppercase tracking-tight leading-tight">Initial Launch</h3>
+          <ul className="p-0 list-none flex flex-col gap-3 mt-4">
+            <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🚀 Initial release with Learn and Competition modes for Bassersdorf.</li>
+          </ul>
+        </div>
+      </div>
+      
+      <button onClick={() => setMode('learn')} className="mt-8 md:mt-12 w-full sm:w-auto bg-transparent border border-glass-border text-text-muted px-6 py-3 rounded-xl cursor-pointer font-bold text-[0.9rem] hover:bg-white/5 hover:text-white active:scale-95 transition-all uppercase tracking-widest text-white leading-none">
+        {mode === 'release_notes' && user ? t('back_to_learn') : "CLOSE"}
+      </button>
+    </div>
+  );
+
+  // Condition for landing/login screen
+  if (!user && mode !== 'release_notes') {
+    if (showLanding) {
+      return (
+        <div className="w-full min-h-screen bg-[#0f172a] text-white">
+          <LandingPage onStart={() => setShowLanding(false)} />
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50">
+             <button onClick={() => setMode('release_notes')} className="text-text-muted hover:text-white font-bold text-xs uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/10 transition-all">What's New?</button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center h-screen w-screen relative overflow-hidden bg-[radial-gradient(circle_at_center,#1e293b_0%,#020617_100%)]">
         <button 
           onClick={() => setShowLanding(true)}
-          className="absolute top-8 left-8 flex items-center gap-2 text-text-muted hover:text-white transition-colors font-bold z-20"
+          className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center gap-2 text-text-muted hover:text-white transition-colors font-bold z-20 text-white"
         >
-          <ArrowLeft size={20} /> {t('back_to_home')}
+          <ArrowLeft size={20} className="text-white" /> {t('back_to_home')}
         </button>
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-[radial-gradient(circle,var(--primary-glow)_0%,transparent_70%)] animate-float"></div>
-          <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(56,189,248,0.1)_0%,transparent_70%)] animate-float-reverse"></div>
+        <div className="absolute inset-0 z-0 text-white">
+          <div className="absolute top-[-10%] right-[-5%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[radial-gradient(circle,var(--primary-glow)_0%,transparent_70%)] animate-float text-white"></div>
+          <div className="absolute bottom-[-10%] left-[-5%] w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-[radial-gradient(circle,rgba(56,189,248,0.1)_0%,transparent_70%)] animate-float-reverse text-white"></div>
         </div>
-        <div className="relative z-10 text-center animate-login-fade">
-          <div className="mb-10">
-            <ShieldAlert size={80} className="text-primary mb-5 mx-auto drop-shadow-[0_0_20px_var(--primary-glow)]" />
-            <h1 className="text-[5rem] font-black tracking-tighter m-0 bg-gradient-to-br from-white via-white to-[#64748b] bg-clip-text text-transparent leading-none">
+        <div className="relative z-10 text-center animate-login-fade px-6 text-white">
+          <div className="mb-8 md:mb-10 text-white">
+            <ShieldAlert size={64} className="text-primary mb-4 md:mb-5 mx-auto drop-shadow-[0_0_20px_var(--primary-glow)] md:w-20 md:h-20 text-white" />
+            <h1 className="text-4xl md:text-[5rem] font-black tracking-tighter m-0 bg-gradient-to-br from-white via-white to-[#64748b] bg-clip-text text-transparent leading-tight md:leading-none">
               {t('app_title')}
             </h1>
-            <p className="text-text-muted text-[1.1rem] font-medium max-w-[400px] mx-auto mt-2.5 leading-relaxed">
+            <p className="text-text-muted text-base md:text-[1.1rem] font-medium max-w-[400px] mx-auto mt-2 md:mt-2.5 leading-relaxed text-white">
               {t('login_desc')}
             </p>
           </div>
-          <form className="flex flex-col gap-5 w-full max-w-[380px] mx-auto bg-[#1e293b]/50 backdrop-blur-2xl p-10 rounded-[32px] border border-glass-border shadow-2xl" onSubmit={handleLogin}>
-            <div className="relative flex items-center">
+          <form className="flex flex-col gap-4 md:gap-5 w-full max-w-[380px] mx-auto bg-[#1e293b]/50 backdrop-blur-2xl p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl text-white" onSubmit={handleLogin}>
+            <div className="relative flex items-center text-white">
               <UserIcon size={20} className="absolute left-4 text-text-muted" />
-              <input name="username" placeholder={t('username')} required autoComplete="off" className="w-full py-4.5 pl-12 pr-4.5 rounded-2xl bg-[#0f172a]/60 border border-glass-border text-white text-[1rem] font-semibold outline-none" />
+              <input name="username" placeholder={t('username')} required autoComplete="off" className="w-full py-3.5 md:py-4.5 pl-12 pr-4.5 rounded-xl md:rounded-2xl bg-[#0f172a]/60 border border-glass-border text-white text-base md:text-[1rem] font-semibold outline-none focus:border-primary/50 transition-all text-white" />
             </div>
-            <button type="submit" className="py-4.5 bg-primary text-white border-none rounded-2xl cursor-pointer font-extrabold text-[1.1rem] flex items-center justify-center gap-3 transition-all duration-300 shadow-[0_10px_20px_-5px_var(--primary-glow)] hover:-translate-y-[3px] hover:brightness-110">
+            <button type="submit" className="py-3.5 md:py-4.5 bg-primary text-white border-none rounded-xl md:rounded-2xl cursor-pointer font-extrabold text-base md:text-[1.1rem] flex items-center justify-center gap-2 md:gap-3 transition-all duration-300 shadow-[0_10px_20px_-5px_var(--primary-glow)] hover:-translate-y-[3px] hover:brightness-110 active:scale-95 text-white leading-none">
               <span>{t('login')}</span><ChevronRight size={20} />
             </button>
           </form>
-          <div className="mt-7.5 flex items-center justify-center">
+          <div className="mt-6 md:mt-7.5 flex items-center justify-center text-white">
             <LanguageSwitcher current={i18n.language} onChange={changeLanguage} />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Handle Release Notes mode when not logged in
+  if (mode === 'release_notes' && !user) {
+    return (
+      <div className="w-full h-screen bg-bg overflow-y-auto">
+        <ReleaseNotesContent />
       </div>
     );
   }
 
   return (
-    <div className={`grid grid-rows-[auto_1fr] h-screen h-[100dvh] w-screen overflow-hidden ${isEmergencyActive ? 'emergency-lights' : ''}`}>
-      <header className="bg-surface text-white px-6 py-2.5 flex justify-between items-center border-b border-glass-border z-[1001] shadow-2xl shrink-0 min-h-[64px]">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-3">
-            <MapIcon size={20} className="header-icon" />
-            <div className="flex flex-col leading-[1.2]">
-              <span className="text-[0.9rem] font-bold"><strong>{user}</strong></span>
-              <span className="text-[0.65rem] font-black uppercase px-2 py-0.5 rounded-[4px] tracking-wider" style={{ backgroundColor: userRank.color + '33', color: userRank.color }}>
+    <div className={`grid grid-rows-[auto_1fr] h-screen h-[100dvh] w-screen overflow-hidden ${isEmergencyActive ? 'emergency-lights' : ''} text-white`}>
+      <header className="bg-surface text-white px-4 md:px-6 py-2 flex justify-between items-center border-b border-glass-border z-[1001] shadow-2xl shrink-0 min-h-[56px] md:min-h-[64px]">
+        <div className="flex items-center gap-2 md:gap-3 text-white">
+          <div className="flex items-center gap-2 md:gap-3 text-white">
+            <MapIcon size={18} className="text-primary md:w-5 md:h-5 text-white" />
+            <div className="flex flex-col leading-tight text-white">
+              <span className="text-[0.8rem] md:text-[0.9rem] font-bold truncate max-w-[80px] md:max-w-none text-white"><strong>{user}</strong></span>
+              <span className="text-[0.55rem] md:text-[0.65rem] font-black uppercase px-1.5 py-0.5 rounded-[4px] tracking-wider" style={{ backgroundColor: userRank.color + '33', color: userRank.color }}>
                 {userRank.title}
               </span>
             </div>
           </div>
-          <div className="w-[1px] h-5 bg-glass-border mx-2"></div>
-          <div className="flex items-center gap-2.5 text-text-muted" title={`${knownStreetIds.length} von ${streets.length} Strassen bekannt`}>
-            <Compass size={16} />
-            <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden border border-glass-border">
+          <div className="w-[1px] h-4 md:h-5 bg-glass-border mx-1 md:mx-2"></div>
+          <div className="flex items-center gap-1.5 md:gap-2.5 text-text-muted" title={`${knownStreetIds.length} von ${streets.length} Strassen bekannt`}>
+            <Compass size={14} className="md:w-4 md:h-4 text-white" />
+            <div className="w-12 md:w-20 h-1 md:h-1.5 bg-white/5 rounded-full overflow-hidden border border-glass-border hidden sm:block">
               <div className="h-full bg-gradient-to-r from-accent to-[#4ade80] transition-[width] duration-1000" style={{ width: `${completionRate}%` }}></div>
             </div>
-            <span className="text-[0.75rem] font-extrabold text-white min-w-[35px]">{completionRate}%</span>
+            <span className="text-[0.65rem] md:text-[0.75rem] font-extrabold text-white">{completionRate}%</span>
           </div>
-          <div className="w-[1px] h-5 bg-glass-border mx-2"></div>
-          <div className="flex items-center">
+          <div className="w-[1px] h-4 md:h-5 bg-glass-border mx-1 md:mx-2 hidden sm:block"></div>
+          <div className="flex items-center scale-90 md:scale-100 origin-left">
             <LanguageSwitcher current={i18n.language} onChange={changeLanguage} />
           </div>
         </div>
-        <nav className="flex gap-2">
+        
+        <nav className="flex gap-1 md:gap-2 overflow-x-auto no-scrollbar ml-2 md:ml-0 text-white">
           <button 
-            className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer rounded-xl transition-all duration-200 font-semibold text-[0.85rem] ${mode === 'learn' ? 'text-primary bg-primary/12' : 'text-text-muted hover:text-white hover:bg-white/5'}`} 
+            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'learn' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'}`} 
             onClick={() => setMode('learn')}
           >
-            <BookOpen size={18} /> {t('learn_mode')}
+            <BookOpen size={16} className="md:w-[18px] md:h-[18px]" /> <span className="hidden md:inline">{t('learn_mode')}</span>
           </button>
           <button 
-            className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer rounded-xl transition-all duration-200 font-semibold text-[0.85rem] ${mode === 'compete' ? 'text-primary bg-primary/12' : 'text-text-muted hover:text-white hover:bg-white/5'}`} 
+            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'compete' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'}`} 
             onClick={() => { setMode('compete'); setShowRulesModal(true); }}
           >
-            <Trophy size={18} /> {t('compete_mode')}
+            <Trophy size={16} className="md:w-[18px] md:h-[18px]" /> <span className="hidden md:inline">{t('compete_mode')}</span>
           </button>
           <button 
-            className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer rounded-xl transition-all duration-200 font-semibold text-[0.85rem] ${mode === 'leaderboard' ? 'text-primary bg-primary/12' : 'text-text-muted hover:text-white hover:bg-white/5'}`} 
+            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'leaderboard' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'}`} 
             onClick={() => setMode('leaderboard')}
           >
-            <LayoutList size={18} /> {t('leaderboard')}
+            <LayoutList size={16} className="md:w-[18px] md:h-[18px]" /> <span className="hidden md:inline">{t('leaderboard')}</span>
           </button>
           <button 
-            className={`flex items-center gap-2 px-4 py-2.5 cursor-pointer rounded-xl transition-all duration-200 font-semibold text-[0.85rem] ${mode === 'release_notes' ? 'text-primary bg-primary/12' : 'text-text-muted hover:text-white hover:bg-white/5'}`} 
+            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'release_notes' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'}`} 
             onClick={() => setMode('release_notes')}
           >
-            <History size={18} /> {t('release_notes')}
+            <History size={16} className="md:w-[18px] md:h-[18px]" /> <span className="hidden md:inline">{t('release_notes')}</span>
           </button>
-          <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2.5 cursor-pointer rounded-xl transition-all duration-200 font-semibold text-[0.85rem] text-red-500 hover:bg-white/5">
-            <LogOut size={18} /> {t('logout')}
+          <button onClick={handleLogout} className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-2 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl text-red-500 hover:bg-red-500/10 transition-all">
+            <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
           </button>
         </nav>
       </header>
 
-      <main className="flex-1 relative bg-bg overflow-hidden">
+      <main className="flex-1 relative bg-bg overflow-hidden text-white">
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md z-[2000]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md z-[2000] text-white">
             <div className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin mb-5"></div>
-            <p className="font-semibold">{t('loading')}</p>
+            <p className="font-semibold text-white">{t('loading')}</p>
           </div>
         )}
 
         {showRulesModal && (
-          <div className="fixed inset-0 bg-[#0f172a]/90 backdrop-blur-xl flex justify-center items-center z-[9999] animate-modal-fade">
-            <div className="bg-surface w-[95%] max-w-[650px] p-10 rounded-[40px] border border-glass-border shadow-[0_40px_100px_-20px_rgba(0,0,0,0.7)] text-left relative overflow-hidden animate-modal-scale">
-              <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(255,82,82,0.05)_0%,transparent_70%)] pointer-events-none z-0"></div>
-              <div className="flex items-center gap-5 mb-7.5 relative z-10">
-                <Zap size={32} className="text-primary" /> 
-                <h2 className="text-[2.2rem] font-black m-0 tracking-tight">{t('rules_title')}</h2>
+          <div className="fixed inset-0 bg-[#0f172a]/90 backdrop-blur-xl flex justify-center items-center z-[9999] animate-modal-fade px-4 text-white">
+            <div className="bg-surface w-full max-w-[650px] p-6 md:p-10 rounded-3xl md:rounded-[40px] border border-glass-border shadow-[0_40px_100px_-20px_rgba(0,0,0,0.7)] text-left relative overflow-hidden animate-modal-scale max-h-[90vh] overflow-y-auto text-white">
+              <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(255,82,82,0.05)_0%,transparent_70%)] pointer-events-none z-0 text-white"></div>
+              <div className="flex items-center gap-4 md:gap-5 mb-6 md:mb-7.5 relative z-10 text-white leading-none">
+                <Zap size={28} className="text-primary md:w-8 md:h-8 text-white" /> 
+                <h2 className="text-[1.5rem] md:text-[2.2rem] font-black m-0 tracking-tight leading-none uppercase text-white">{t('rules_title')}</h2>
               </div>
-              <div className="grid grid-cols-1 gap-4 mb-[35px] relative z-10">
+              <div className="grid grid-cols-1 gap-3 md:gap-4 mb-8 md:mb-[35px] relative z-10 text-white leading-none">
                 {[
                   { icon: Target, color: 'var(--accent)', title: 'rule_base_title', desc: 'rule_base_desc' },
                   { icon: Clock, color: 'var(--primary)', title: 'rule_time_title', desc: 'rule_time_desc' },
@@ -439,16 +513,16 @@ const App: React.FC = () => {
                   { icon: Flame, color: '#fb923c', title: 'rule_streak_title', desc: 'rule_streak_desc' },
                   { icon: Compass, color: 'var(--accent)', title: 'rule_discovery_title', desc: 'rule_discovery_desc' }
                 ].map((rule, i) => (
-                  <div key={i} className="flex items-start gap-5 bg-white/[0.03] p-5 rounded-[20px] border border-white/[0.05] transition-all duration-200 hover:bg-white/[0.06] hover:translate-x-[5px] hover:border-white/10">
-                    <rule.icon size={28} color={rule.color} /> 
+                  <div key={i} className="flex items-start gap-4 md:gap-5 bg-white/[0.03] p-4 md:p-5 rounded-xl md:rounded-[20px] border border-white/[0.05] transition-all duration-200 text-white leading-none">
+                    <rule.icon size={24} className="md:w-7 md:h-7 shrink-0 mt-1" color={rule.color} /> 
                     <div>
-                      <h4 className="m-0 mb-1 text-[1rem] font-extrabold text-white">{t(rule.title)}</h4>
-                      <p className="m-0 text-[0.9rem] text-text-muted leading-relaxed" dangerouslySetInnerHTML={{ __html: t(rule.desc) }}></p>
+                      <h4 className="m-0 mb-0.5 md:mb-1 text-[0.9rem] md:text-[1rem] font-extrabold text-white leading-none">{t(rule.title)}</h4>
+                      <p className="m-0 text-[0.8rem] md:text-[0.9rem] text-text-muted leading-relaxed text-white" dangerouslySetInnerHTML={{ __html: t(rule.desc) }}></p>
                     </div>
                   </div>
                 ))}
               </div>
-              <button className="w-full py-4 px-8 bg-primary text-white border-none rounded-2xl text-[1.1rem] font-extrabold cursor-pointer flex items-center justify-center gap-3 transition-all duration-200 shadow-[0_10px_20px_-5px_var(--primary-glow)] hover:-translate-y-0.5 hover:brightness-110 relative z-10" onClick={() => { setShowRulesModal(false); startCompetition(); }}>
+              <button className="w-full py-3.5 md:py-4 px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl text-[1rem] md:text-[1.1rem] font-black cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all relative z-10 text-white" onClick={() => { setShowRulesModal(false); startCompetition(); }}>
                 <Play size={20} fill="currentColor" /> {t('rules_start')}
               </button>
             </div>
@@ -476,52 +550,56 @@ const App: React.FC = () => {
                       }}
                       eventHandlers={{ click: () => setSelectedStreetId(s.id) }} interactive={true}
                     >
-                      <Tooltip permanent={false} className="street-tooltip">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
+                      <Tooltip permanent={false} className="street-tooltip text-white">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
                     </Polyline>
                   ))}
                 </React.Fragment>
               ))}
               {visibleHydrants.map(h => (
                 <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#38bdf8', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}>
-                  <Tooltip className="street-tooltip">Hydrant #{h.id}</Tooltip>
+                  <Tooltip className="street-tooltip text-white">Hydrant #{h.id}</Tooltip>
                 </CircleMarker>
               ))}
             </MapContainer>
+            
             <button 
-              className="absolute bottom-[120px] left-6 bg-glass-bg backdrop-blur-lg border border-glass-border text-white px-4.5 py-2.5 rounded-xl flex items-center gap-2.5 cursor-pointer z-[1000] shadow-2xl transition-all duration-300 font-bold text-[0.85rem] hover:-translate-y-0.5 hover:bg-surface hover:border-accent" 
+              className="absolute bottom-24 md:bottom-[120px] left-4 md:left-6 bg-glass-bg backdrop-blur-lg border border-glass-border text-white px-3 py-2 md:px-4.5 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-2 cursor-pointer z-[1000] shadow-2xl transition-all duration-300 font-bold text-[0.7rem] md:text-[0.85rem] hover:bg-surface hover:border-accent active:scale-95 text-white" 
               onClick={() => setShowHydrants(!showHydrants)}
             >
-              {showHydrants ? <EyeOff size={20} className="text-accent" /> : <Droplets size={20} className="text-accent" />}
-              <span>{showHydrants ? "Hydranten aus" : "Hydranten ein"}</span>
+              {showHydrants ? <EyeOff size={16} className="text-accent md:w-5 md:h-5 text-white" /> : <Droplets size={16} className="text-accent md:w-5 md:h-5 text-white" />}
+              <span className="text-white">{showHydrants ? "Aus" : "Hydranten"}</span>
             </button>
-            <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2 bg-glass-bg backdrop-blur-lg px-6 py-3 rounded-full border border-glass-border z-[1000] shadow-2xl flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2.5 text-[0.9rem] text-white font-semibold"><BookOpen size={18} /> {t('learn_overlay')}</div>
-              <div className="flex gap-5 border-t border-white/10 pt-2">
-                <div className="flex items-center gap-1.5 text-[0.7rem] text-text-muted font-black uppercase"><span className="w-2 h-2 rounded-full bg-[#4ade80] shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span> {t('legend_known')}</div>
-                <div className="flex items-center gap-1.5 text-[0.7rem] text-text-muted font-black uppercase"><span className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> {t('legend_unknown')}</div>
-                <div className="flex items-center gap-1.5 text-[0.7rem] text-text-muted font-black uppercase"><span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> Hydrant</div>
+
+            <div className="absolute bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto bg-glass-bg backdrop-blur-lg px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-full border border-glass-border z-[1000] shadow-2xl flex flex-col items-center gap-1.5 md:gap-2 text-white">
+              <div className="flex items-center gap-2 text-[0.75rem] md:text-[0.9rem] text-white font-semibold text-white"><BookOpen size={14} className="md:w-[18px] md:h-[18px] text-white" /> {t('learn_overlay')}</div>
+              <div className="flex gap-3 md:gap-5 border-t border-white/10 pt-1.5 md:pt-2 w-full justify-center text-white">
+                <div className="flex items-center gap-1 text-[0.6rem] md:text-[0.7rem] text-text-muted font-black uppercase text-white leading-none"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#4ade80] shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span> <span>{t('legend_known')}</span></div>
+                <div className="flex items-center gap-1 text-[0.6rem] md:text-[0.7rem] text-text-muted font-black uppercase text-white leading-none"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> <span>{t('legend_unknown')}</span></div>
+                <div className="flex items-center gap-1 text-[0.6rem] md:text-[0.7rem] text-text-muted font-black uppercase text-white leading-none"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> Hydrant</div>
               </div>
             </div>
           </div>
         )}
 
         {mode === 'compete' && currentStreet && !showRulesModal && (
-          <div className="flex flex-col h-full w-full">
-            <div className="flex justify-between absolute top-5 inset-x-5 z-[1000]">
-              <div className="bg-glass-bg backdrop-blur-lg px-4 py-2 rounded-2xl border border-glass-border shadow-2xl text-white font-black flex items-center gap-2"><Trophy size={16} /> {t('round')}: {totalQuestions}/10</div>
-              <div className={`bg-glass-bg backdrop-blur-lg px-4 py-2 rounded-2xl border border-glass-border shadow-2xl text-white font-black flex items-center gap-2 ${streak >= 3 ? 'animate-pulse text-primary border-primary/30' : ''}`}>
-                {score.toLocaleString()} PTS
-                {streak >= 3 && <span className="text-[0.7rem] bg-primary text-white px-1.5 rounded ml-1.5">x{streak >= 10 ? '3' : streak >= 5 ? '2' : '1.5'}</span>}
-                {streak >= 3 && <Flame size={18} className="text-[#fb923c]" />}
+          <div className="flex flex-col h-full w-full relative text-white">
+            <div className="flex justify-between absolute top-3 md:top-5 inset-x-3 md:inset-x-5 z-[1000] gap-2 text-white">
+              <div className="bg-glass-bg backdrop-blur-lg px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-glass-border shadow-2xl font-black flex items-center gap-1.5 text-[0.7rem] md:text-base text-white"><Trophy size={14} className="md:w-4 md:h-4 text-white" /> {t('round')}: {totalQuestions}/10</div>
+              <div className={`bg-glass-bg backdrop-blur-lg px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-glass-border shadow-2xl font-black flex items-center gap-1.5 text-[0.7rem] md:text-base text-white ${streak >= 3 ? 'animate-pulse text-primary border-primary/30' : ''}`}>
+                {score.toLocaleString()} <span className="hidden xs:inline">PTS</span>
+                {streak >= 3 && <span className="text-[0.6rem] bg-primary text-white px-1 rounded ml-1">x{streak >= 10 ? '3' : streak >= 5 ? '2' : '1.5'}</span>}
+                {streak >= 3 && <Flame size={14} className="text-[#fb923c] md:w-4 md:h-4 text-white" />}
               </div>
             </div>
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[260px] bg-glass-bg backdrop-blur-md p-1.5 px-3 rounded-[20px] z-[1000] border border-glass-border flex items-center gap-3 shadow-2xl">
-              <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+
+            <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 w-[180px] md:w-[260px] bg-glass-bg backdrop-blur-md p-1 px-3 rounded-full md:rounded-[20px] z-[1000] border border-glass-border flex items-center gap-2 md:gap-3 shadow-2xl text-white">
+              <div className="flex-1 h-1 md:h-1.5 bg-white/5 rounded-full overflow-hidden text-white">
                 <div className="h-full rounded-full transition-all duration-100 linear" style={{ width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`, backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)' }}></div>
               </div>
-              <div className="text-[0.8rem] font-black text-white min-w-[35px] text-right tabular-nums">{Math.ceil(timeLeft)}s</div>
+              <div className="text-[0.7rem] md:text-[0.8rem] font-black text-white min-w-[25px] md:min-w-[35px] text-right tabular-nums text-white">{Math.ceil(timeLeft)}s</div>
             </div>
-            <div className="absolute inset-0 w-full h-full z-1 touch-none">
+
+            <div className="absolute inset-0 w-full h-full z-1 touch-none text-white">
               <MapContainer key={`map-compete-${currentStreet.id}`} center={BASSERSDORF_CENTER} zoom={17} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <LayersControl position="topright">
                   <LayersControl.BaseLayer checked name={t('map_stumm')}>
@@ -535,44 +613,45 @@ const App: React.FC = () => {
                 ))}
                 {visibleHydrants.map(h => (
                   <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#38bdf8', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}>
-                    <Tooltip className="street-tooltip">Hydrant #{h.id}</Tooltip>
+                    <Tooltip className="street-tooltip text-white leading-none">Hydrant #{h.id}</Tooltip>
                   </CircleMarker>
                 ))}
                 <MapFocus coords={currentStreet.coordinates} />
               </MapContainer>
             </div>
-            <div className="absolute bottom-[30px] left-1/2 -translate-x-1/2 w-[90%] max-w-[600px] bg-glass-bg backdrop-blur-[24px] p-6 rounded-[32px] border border-glass-border shadow-2xl z-[1000]">
+
+            <div className="absolute bottom-4 md:bottom-[30px] left-1/2 -translate-x-1/2 w-[94%] md:w-[90%] max-w-[600px] bg-glass-bg backdrop-blur-[24px] p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl z-[1000] text-white">
               {feedback ? (
-                <div className="flex flex-col items-center gap-[15px]">
-                  <div className={`flex flex-col items-center gap-[15px] ${feedback === 'correct' ? 'text-[#4ade80]' : 'text-primary'}`}>
-                    <div className="mb-2">{feedback === 'correct' ? <CheckCircle2 size={64} className="icon-pulse" /> : <XCircle size={64} className="icon-shake" />}</div>
-                    <div className="text-center">
-                      <h2 className="text-[2.2rem] font-black mb-1 leading-none uppercase">{t(feedback)}</h2>
-                      {feedback !== 'correct' && <p className="text-[1.1rem] font-bold text-white/80">{t('correct_is', { name: currentStreet?.name })}</p>}
+                <div className="flex flex-col items-center gap-3 md:gap-[15px] text-white">
+                  <div className={`flex flex-col items-center gap-2 md:gap-[15px] ${feedback === 'correct' ? 'text-[#4ade80]' : 'text-primary'} text-white`}>
+                    <div className="mb-1 md:mb-2 text-white">{feedback === 'correct' ? <CheckCircle2 size={48} className="icon-pulse md:w-16 md:h-16 text-white" /> : <XCircle size={48} className="icon-shake md:w-16 md:h-16 text-white" />}</div>
+                    <div className="text-center text-white leading-none">
+                      <h2 className="text-[1.5rem] md:text-[2.2rem] font-black mb-0.5 md:mb-1 leading-none uppercase tracking-tighter text-white">{t(feedback)}</h2>
+                      {feedback !== 'correct' && <p className="text-[0.9rem] md:text-[1.1rem] font-bold text-white/80 text-white">{t('correct_is', { name: currentStreet?.name })}</p>}
                       {feedback === 'correct' && (
-                        <div className="flex flex-col items-center gap-1 mt-2">
-                          {streak >= 3 && <p className="text-[#fb923c] font-black text-[1.2rem]">{t('streak_bonus', { count: streak })}</p>}
-                          {lastDiscoveryBonus && <p className="text-[#4ade80] font-black text-[1.1rem]">{t('discovery_bonus_label')}</p>}
+                        <div className="flex flex-col items-center gap-0.5 md:gap-1 mt-1 md:mt-2 text-white">
+                          {streak >= 3 && <p className="text-[#fb923c] font-black text-[1rem] md:text-[1.2rem] text-white">{t('streak_bonus', { count: streak })}</p>}
+                          {lastDiscoveryBonus && <p className="text-[#4ade80] font-black text-[0.9rem] md:text-[1.1rem] text-white">{t('discovery_bonus_label')}</p>}
                         </div>
                       )}
                     </div>
-                    <div className="w-full mt-[15px]">
+                    <div className="w-full mt-2 md:mt-[15px] text-white">
                       {totalQuestions < 10 ? (
-                        <button onClick={nextQuestion} className="w-full py-4 px-8 bg-primary text-white border-none rounded-2xl text-[1.1rem] font-extrabold cursor-pointer flex items-center justify-center gap-3 transition-all duration-200 shadow-[0_10px_20px_-5px_var(--primary-glow)] hover:-translate-y-0.5 hover:brightness-110">
-                          <span>{t('next_street')}</span> <ChevronRight size={20} />
+                        <button onClick={nextQuestion} className="w-full py-3.5 md:py-4 px-6 md:px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl font-black text-[1rem] md:text-[1.1rem] cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all text-white">
+                          <span>{t('next_street')}</span> <ChevronRight size={18} className="md:w-5 md:h-5 text-white" />
                         </button>
                       ) : (
-                        <button onClick={() => setMode('leaderboard')} className="w-full py-4 px-8 bg-primary text-white border-none rounded-2xl text-[1.1rem] font-extrabold cursor-pointer flex items-center justify-center gap-3 transition-all duration-200 shadow-[0_10px_20px_-5px_var(--primary-glow)] hover:-translate-y-0.5 hover:brightness-110 border-2 border-accent/30">
-                          <Trophy size={20} /> <span>{t('to_leaderboard')}</span>
+                        <button onClick={() => setMode('leaderboard')} className="w-full py-3.5 md:py-4 px-6 md:px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl font-black text-[1rem] md:text-[1.1rem] cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all border-2 border-accent/30 text-white leading-none">
+                          <Trophy size={18} className="md:w-5 md:h-5 text-white" /> <span>{t('to_leaderboard')}</span>
                         </button>
                       )}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-white leading-none">
                   {options.map(opt => (
-                    <button key={opt} onClick={() => handleAnswer(opt)} className="p-[1.2rem] text-[0.95rem] font-bold bg-white/5 border border-white/10 text-white cursor-pointer rounded-[18px] transition-all duration-200 min-h-[70px] flex items-center justify-center text-center hover:bg-primary hover:-translate-y-[3px] hover:shadow-[0_8px_20px_var(--primary-glow)]">
+                    <button key={opt} onClick={() => handleAnswer(opt)} className="p-3.5 md:p-[1.2rem] text-[0.85rem] md:text-[0.95rem] font-bold bg-white/5 border border-white/10 text-white cursor-pointer rounded-xl md:rounded-[18px] transition-all duration-200 min-h-[50px] md:min-h-[70px] flex items-center justify-center text-center hover:bg-primary active:scale-95 active:bg-primary text-white">
                       {opt}
                     </button>
                   ))}
@@ -582,86 +661,73 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {(mode === 'leaderboard' || mode === 'release_notes') && (
-          <div className="absolute inset-0 overflow-y-auto pb-[50px] z-10">
-            {mode === 'leaderboard' && (
-              <div className="py-12 px-6 max-w-[900px] mx-auto text-center">
-                <div className="flex items-center justify-center gap-4 mb-10"><Trophy size={32} className="text-accent" /> <h2 className="text-[2.5rem] font-black tracking-tight leading-none">Hall of Fame</h2></div>
-                <div className="flex justify-center items-end gap-4 mb-16 pt-5 flex-wrap md:flex-nowrap">
-                  {topThree.map((entry, i) => {
-                    const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
-                    const rank = getRank(totalS);
-                    const isWinner = i === 0;
-                    return (
-                      <div key={i} className={`bg-surface border border-glass-border rounded-[28px] p-6 flex flex-col items-center gap-3 w-full md:w-[190px] relative transition-all duration-300 shadow-2xl hover:-translate-y-2.5 ${isWinner ? 'order-1 md:order-2 md:p-11 md:w-[220px] border-yellow-500/40 bg-gradient-to-b from-[#1e293b] to-[#0f172a] z-[2]' : i === 1 ? 'order-2 md:order-1' : 'order-3 md:order-3'}`}>
-                        <div className={`w-14 h-14 rounded-full flex justify-center items-center mb-2.5 ${isWinner ? 'bg-[#fbbf24] shadow-[0_0_30px_rgba(251,191,36,0.5)]' : i === 1 ? 'bg-[#cbd5e1]' : 'bg-[#d97706]'}`}>
-                          <Medal size={24} color="#0f172a" />
-                        </div>
-                        <span className="font-black text-[1.2rem] text-white truncate w-full">{entry.user}</span>
-                        <span className="text-[0.7rem] font-black uppercase" style={{ color: rank.color }}>{rank.title}</span>
-                        <span className="text-[1.4rem] font-black text-accent">{entry.score.toLocaleString()}</span>
+        {/* Global Overlays (Leaderboard & Release Notes) - High Z-Index to stay above everything */}
+        {mode === 'leaderboard' && (
+          <div className="absolute inset-0 overflow-y-auto pb-[50px] z-[3000] bg-bg text-white">
+            <div className="py-8 md:py-12 px-4 md:px-6 max-w-[900px] mx-auto text-center text-white">
+              <div className="flex items-center justify-center gap-3 md:gap-4 mb-8 md:mb-10 text-white"><Trophy size={28} className="text-accent md:w-8 md:h-8 text-white" /> <h2 className="text-[1.8rem] md:text-[2.5rem] font-black tracking-tight leading-none uppercase text-white">{t('leaderboard')}</h2></div>
+              
+              <div className="flex justify-center items-end gap-2 md:gap-4 mb-12 md:mb-16 pt-5 text-white leading-none">
+                {topThree.map((entry, i) => {
+                  const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
+                  const rank = getRank(totalS);
+                  const isWinner = i === 0;
+                  return (
+                    <div key={i} className={`bg-surface border border-glass-border rounded-2xl md:rounded-[28px] p-3 md:p-6 flex flex-col items-center gap-1.5 md:gap-3 w-[100px] sm:w-[140px] md:w-[190px] relative transition-all duration-300 shadow-2xl ${isWinner ? 'order-2 scale-110 md:scale-125 border-yellow-500/40 bg-gradient-to-b from-[#1e293b] to-[#0f172a] z-[2] mb-4' : i === 1 ? 'order-1' : 'order-3'} text-white`}>
+                      <div className={`w-8 h-8 md:w-14 md:h-14 rounded-full flex justify-center items-center mb-1 ${isWinner ? 'bg-[#fbbf24] shadow-[0_0_20px_rgba(251,191,36,0.5)]' : i === 1 ? 'bg-[#cbd5e1]' : 'bg-[#d97706]'} text-white`}>
+                        <Medal size={isWinner ? 20 : 16} className="md:w-6 md:h-6 text-white" color="#0f172a" />
                       </div>
-                    );
-                  })}
-                </div>
-                <div className="bg-surface rounded-[32px] p-4 border border-glass-border mb-12">
-                  <table className="w-full border-collapse">
-                    <thead><tr><th className="p-4 px-5 text-text-muted text-[0.7rem] uppercase text-left">{t('rank')}</th><th className="p-4 px-5 text-text-muted text-[0.7rem] uppercase text-left">{t('name')}</th><th className="p-4 px-5 text-text-muted text-[0.7rem] uppercase text-left">{t('points')}</th><th className="p-4 px-5 text-text-muted text-[0.7rem] uppercase text-left">{t('date')}</th></tr></thead>
+                      <span className="font-black text-[0.7rem] md:text-[1.2rem] text-white truncate w-full px-1 text-white">{entry.user}</span>
+                      <span className="text-[0.5rem] md:text-[0.7rem] font-black uppercase text-white" style={{ color: rank.color }}>{rank.title}</span>
+                      <span className="text-[0.9rem] md:text-[1.4rem] font-black text-accent leading-none mt-1 text-white">{entry.score.toLocaleString()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="bg-surface rounded-2xl md:rounded-[32px] p-2 md:p-4 border border-glass-border mb-8 md:mb-12 overflow-hidden text-white leading-none">
+                <div className="overflow-x-auto text-white">
+                  <table className="w-full border-collapse min-w-[400px] text-white">
+                    <thead><tr><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left text-white">{t('rank')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left text-white">{t('name')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left text-white">{t('points')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left hidden sm:table-cell text-white">{t('date')}</th></tr></thead>
                     <tbody>
                       {restOfList.map((entry: any, i: number) => {
                         const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
                         const rank = getRank(totalS);
                         return (
-                          <tr key={i} className={`border-t border-white/[0.05] ${entry.user === user ? 'bg-accent/8 text-accent' : ''}`}>
-                            <td className="p-5">#{i + 4}</td>
-                            <td className="p-5"><div className="flex flex-col gap-[2px]"><span className="font-bold text-[1rem]">{entry.user}</span><span className="text-[0.7rem] font-black uppercase" style={{ color: rank.color }}>{rank.title}</span></div></td>
-                            <td className="p-5 font-black text-primary text-[1.1rem]">{entry.score.toLocaleString()}</td>
-                            <td className="p-5">{entry.date}</td>
+                          <tr key={i} className={`border-t border-white/[0.05] ${entry.user === user ? 'bg-accent/10 text-accent font-black' : ''} text-white`}>
+                            <td className="p-3 md:p-5 text-[0.8rem] md:text-base text-white">#{i + 4}</td>
+                            <td className="p-3 md:p-5 text-white leading-none"><div className="flex flex-col gap-0.5 text-white"><span className="text-[0.85rem] md:text-[1rem] text-white leading-none">{entry.user}</span><span className="text-[0.55rem] md:text-[0.7rem] font-black uppercase text-white leading-none" style={{ color: rank.color }}>{rank.title}</span></div></td>
+                            <td className="p-3 md:p-5 font-black text-primary text-[0.9rem] md:text-[1.1rem] text-white">{entry.score.toLocaleString()}</td>
+                            <td className="p-3 md:p-5 text-[0.7rem] md:text-[0.85rem] text-text-muted hidden sm:table-cell text-white">{entry.date}</td>
                           </tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 bg-surface p-10 rounded-[32px] mb-8 border border-glass-border justify-items-center">
-                  {ACHIEVEMENTS.map(ach => {
-                    const isUnlocked = unlockedAchievements.includes(ach.id);
-                    return (
-                      <div key={ach.id} className={`flex flex-col items-center gap-3 w-full transition-all duration-300 ${isUnlocked ? 'filter-none opacity-100 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'grayscale opacity-20'}`} title={t(ach.desc)}>
-                        <div className="p-3 rounded-full bg-white/[0.03] border border-white/[0.05]">
-                          <ach.icon size={24} color={isUnlocked ? ach.color : '#475569'} />
-                        </div>
-                        <span className={`text-[0.7rem] font-extrabold uppercase text-center ${isUnlocked ? 'text-white' : 'text-text-muted'}`}>{t(ach.title)}</span>
-                      </div>
-                    );
-                  })}
-                </div>                
-                <button onClick={() => setMode('learn')} className="mt-8 bg-transparent border border-glass-border text-text-muted px-5 py-2.5 rounded-xl cursor-pointer font-semibold hover:bg-white/5 hover:text-white">{t('back_to_learn')}</button>
               </div>
-            )}
 
-            {mode === 'release_notes' && (
-              <div className="py-12 px-6 max-w-[900px] mx-auto">
-                <div className="flex items-center gap-4 mb-10"><History size={32} className="text-primary" /> <h2 className="text-[2.5rem] font-black tracking-tight">{t('release_notes')}</h2></div>
-                <div className="flex flex-col gap-8">
-                  <div className="bg-surface p-10 rounded-[32px] border border-glass-border shadow-2xl text-left">
-                    <div className="bg-primary text-white inline-block px-3.5 py-1.5 rounded-lg font-black text-[0.75rem] mb-3">v1.9.0</div>
-                    <h3 className="mt-0 text-white text-[1.6rem] font-black mb-6">House Numbers Integrated</h3>
-                    <ul className="p-0 list-none flex flex-col gap-3">
-                      <li className="relative pl-7 leading-normal text-text-muted text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black">🏠 **Always Visible**: Hausnummern werden nun permanent auf der Karte angezeigt (ab Zoom-Level 18).</li>
-                    </ul>
-                  </div>
-                  <div className="bg-surface p-10 rounded-[32px] border border-glass-border shadow-2xl text-left">
-                    <div className="bg-primary text-white inline-block px-3.5 py-1.5 rounded-lg font-black text-[0.75rem] mb-3">v1.8.0</div>
-                    <h3 className="mt-0 text-white text-[1.6rem] font-black mb-6">Map Refinement</h3>
-                    <ul className="p-0 list-none flex flex-col gap-3">
-                      <li className="relative pl-7 leading-normal text-text-muted text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black">🗺️ **Consistent Map**: Lern- und Wettkampfmodus nutzen den identischen CartoDB Voyager Stil.</li>
-                    </ul>
-                  </div>
-                </div>
-                <button onClick={() => setMode('learn')} className="mt-8 bg-transparent border border-glass-border text-text-muted px-5 py-2.5 rounded-xl cursor-pointer font-semibold hover:bg-white/5 hover:text-white">{t('back_to_learn')}</button>
-              </div>
-            )}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 md:gap-6 bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] mb-8 border border-glass-border justify-items-center text-white">
+                {ACHIEVEMENTS.map(ach => {
+                  const isUnlocked = unlockedAchievements.includes(ach.id);
+                  return (
+                    <div key={ach.id} className={`flex flex-col items-center gap-2 md:gap-3 w-full transition-all duration-300 ${isUnlocked ? 'filter-none opacity-100' : 'grayscale opacity-20'} text-white leading-none`} title={t(ach.desc)}>
+                      <div className={`p-2.5 md:p-3 rounded-full bg-white/[0.03] border border-white/[0.05] ${isUnlocked ? 'shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''} text-white`}>
+                        <ach.icon size={20} className="md:w-6 md:h-6 text-white" color={isUnlocked ? ach.color : '#475569'} />
+                      </div>
+                      <span className={`text-[0.55rem] md:text-[0.7rem] font-extrabold uppercase text-center leading-tight ${isUnlocked ? 'text-white' : 'text-text-muted'} text-white`}>{t(ach.title)}</span>
+                    </div>
+                  );
+                })}
+              </div>                
+              <button onClick={() => setMode('learn')} className="mt-4 md:mt-8 w-full sm:w-auto bg-transparent border border-glass-border text-text-muted px-6 py-3 rounded-xl cursor-pointer font-bold text-[0.9rem] hover:bg-white/5 hover:text-white active:scale-95 transition-all uppercase tracking-widest text-white leading-none">{t('back_to_learn')}</button>
+            </div>
+          </div>
+        )}
+
+        {mode === 'release_notes' && (
+          <div className="absolute inset-0 overflow-y-auto pb-[50px] z-[3000] bg-bg text-white leading-none">
+            <ReleaseNotesContent />
           </div>
         )}
       </main>

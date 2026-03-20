@@ -17,8 +17,11 @@
 @theme {
   --color-primary: var(--primary);
   --color-primary-glow: var(--primary-glow);
+  --color-secondary: var(--secondary);
   --color-surface: var(--surface);
   --color-accent: var(--accent);
+  --color-bg: var(--bg);
+  --color-text: var(--text);
   --color-text-muted: var(--text-muted);
   --color-glass-bg: var(--glass-bg);
   --color-glass-border: var(--glass-border);
@@ -26,11 +29,20 @@
 
 body, html, #root {
   margin: 0; padding: 0;
-  height: 100%; width: 100%;
+  min-height: 100%; width: 100%;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Scroll management: hide overflow on the app wrapper, but allow it on body for the landing page */
+.app-wrapper {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -77,3 +89,18 @@ body, html, #root {
 
 @keyframes loginFadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 .animate-login-fade { animation: loginFadeIn 0.8s ease-out; }
+
+@keyframes slow-pan {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+.animate-slow-pan { background-size: 200% 200%; animation: slow-pan 20s linear infinite alternate; }
+
+@keyframes text-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+.animate-text-reveal { animation: text-reveal 1.5s cubic-bezier(0.77, 0, 0.175, 1) forwards; }
+
+.text-glow { text-shadow: 0 0 20px var(--primary-glow); }
+.box-glow { box-shadow: 0 0 40px -10px var(--primary-glow); }

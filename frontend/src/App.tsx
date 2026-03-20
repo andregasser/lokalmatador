@@ -8,12 +8,13 @@ import { fetchBassersdorfStreets, fetchBassersdorfHydrants } from './osmService'
 import type { Street, Hydrant } from './osmService';
 import { useTranslation } from 'react-i18next';
 import confetti from 'canvas-confetti';
+import LandingPage from './LandingPage';
 import { 
-  BookOpen, Trophy, LayoutList, History, LogOut, Languages, 
+  BookOpen, Trophy, LayoutList, History, LogOut, 
   Map as MapIcon, CheckCircle2, XCircle, ChevronRight, Play, Zap, 
   Target, Clock, Flame, Moon, Star, ShieldCheck, Compass, Medal, 
   ShieldAlert, User as UserIcon, Droplets, EyeOff, Sun, Infinity,
-  Award, Footprints, Flag
+  Award, Footprints, Flag, ArrowLeft
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
@@ -132,13 +133,15 @@ const App: React.FC = () => {
   const [knownStreetIds, setKnownStreetIds] = useState<string[]>([]);
   const [isEmergencyActive, setIsEmergencyActive] = useState(false);
   const [lastDiscoveryBonus, setLastDiscoveryBonus] = useState(false);
-  const [currentZoom, setCurrentZoom] = useState(15);
+  const [, setCurrentZoom] = useState(15);
   const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
   const [roundsPlayedInSession, setRoundsPlayedInSession] = useState(0);
+  const [showLanding, setShowLanding] = useState(!user);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
+    setShowLanding(false);
     const savedAchievements = JSON.parse(localStorage.getItem(`achievements_${user}`) || '[]');
     setUnlockedAchievements(savedAchievements);
     const savedKnown = JSON.parse(localStorage.getItem(`known_streets_${user}`) || '[]');
@@ -307,9 +310,23 @@ const App: React.FC = () => {
   const topThree = sortedLeaderboard.slice(0, 3);
   const restOfList = sortedLeaderboard.slice(3);
 
+  if (!user && showLanding) {
+    return (
+      <div className="w-full min-h-screen bg-[#0f172a] text-white">
+        <LandingPage onStart={() => setShowLanding(false)} />
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-screen w-screen relative overflow-hidden bg-[radial-gradient(circle_at_center,#1e293b_0%,#020617_100%)]">
+        <button 
+          onClick={() => setShowLanding(true)}
+          className="absolute top-8 left-8 flex items-center gap-2 text-text-muted hover:text-white transition-colors font-bold z-20"
+        >
+          <ArrowLeft size={20} /> {t('back_to_home')}
+        </button>
         <div className="absolute inset-0 z-0">
           <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-[radial-gradient(circle,var(--primary-glow)_0%,transparent_70%)] animate-float"></div>
           <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(56,189,248,0.1)_0%,transparent_70%)] animate-float-reverse"></div>
@@ -574,7 +591,6 @@ const App: React.FC = () => {
                   {topThree.map((entry, i) => {
                     const totalS = leaderboardData.filter((ld: any) => ld.user === entry.user).reduce((sum: number, ld: any) => sum + ld.score, 0);
                     const rank = getRank(totalS);
-                    const medalColors = ['#fbbf24', '#cbd5e1', '#d97706'];
                     const isWinner = i === 0;
                     return (
                       <div key={i} className={`bg-surface border border-glass-border rounded-[28px] p-6 flex flex-col items-center gap-3 w-full md:w-[190px] relative transition-all duration-300 shadow-2xl hover:-translate-y-2.5 ${isWinner ? 'order-1 md:order-2 md:p-11 md:w-[220px] border-yellow-500/40 bg-gradient-to-b from-[#1e293b] to-[#0f172a] z-[2]' : i === 1 ? 'order-2 md:order-1' : 'order-3 md:order-3'}`}>

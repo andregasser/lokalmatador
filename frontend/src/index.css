@@ -31,9 +31,12 @@ body, html, #root {
   margin: 0; padding: 0;
   min-height: 100%; width: 100%;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; /* Inter specific optimizations */
   background-color: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Scroll management: hide overflow on the app wrapper, but allow it on body for the landing page */

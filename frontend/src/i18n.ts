@@ -69,7 +69,14 @@ const resources = {
       "master_explorer_title": "Bassersdorf-Experte",
       "master_explorer_desc": "Kenne mindestens 100 Strassen",
       "local_hero_title": "Ehrenbürger",
-      "local_hero_desc": "Erreiche 100.000 Gesamtpunkte"
+      "local_hero_desc": "Erreiche 100.000 Gesamtpunkte",
+      "nav_learn": "Lernen",
+      "nav_compete": "Wettkampf",
+      "nav_leaderboard": "Bestenliste",
+      "nav_updates": "Release Notes",
+      "toggle_hydrants": "Hydranten",
+      "toggle_pois": "POIs",
+      "toggle_off": "Aus"
     }
   },
   en: {
@@ -138,7 +145,14 @@ const resources = {
       "master_explorer_title": "Bassersdorf Expert",
       "master_explorer_desc": "Know at least 100 streets",
       "local_hero_title": "Honorary Citizen",
-      "local_hero_desc": "Reach 100,000 total points"
+      "local_hero_desc": "Reach 100,000 total points",
+      "nav_learn": "Learn",
+      "nav_compete": "Compete",
+      "nav_leaderboard": "Hall of Fame",
+      "nav_updates": "Release Notes",
+      "toggle_hydrants": "Hydrants",
+      "toggle_pois": "POIs",
+      "toggle_off": "Off"
     }
   }
 };
@@ -148,6 +162,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
+    lng: 'de',
     fallbackLng: 'de',
     interpolation: {
       escapeValue: false

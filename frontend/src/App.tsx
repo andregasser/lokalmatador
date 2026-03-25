@@ -461,25 +461,25 @@ const App: React.FC = () => {
             className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'learn' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none text-white leading-none text-white leading-none`} 
             onClick={() => setMode('learn')}
           >
-            <BookOpen size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline leading-none uppercase tracking-widest text-white leading-none text-white leading-none">learn</span>
+            <BookOpen size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline leading-none uppercase tracking-widest text-white leading-none text-white leading-none">{t('nav_learn')}</span>
           </button>
           <button 
             className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'compete' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none text-white leading-none text-white leading-none`} 
             onClick={() => { setMode('compete'); setShowRulesModal(true); }}
           >
-            <Trophy size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline leading-none uppercase tracking-widest text-white leading-none text-white leading-none">compete</span>
+            <Trophy size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline leading-none uppercase tracking-widest text-white leading-none text-white leading-none">{t('nav_compete')}</span>
           </button>
           <button 
             className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'leaderboard' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none text-white leading-none text-white leading-none`} 
             onClick={() => setMode('leaderboard')}
           >
-            <LayoutList size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline text-white leading-none uppercase tracking-widest leading-none text-white leading-none text-white leading-none">hall of fame</span>
+            <LayoutList size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline text-white leading-none uppercase tracking-widest leading-none text-white leading-none text-white leading-none">{t('nav_leaderboard')}</span>
           </button>
           <button 
             className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'release_notes' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none text-white leading-none text-white leading-none`} 
             onClick={() => setMode('release_notes')}
           >
-            <History size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline text-white leading-none uppercase tracking-widest leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">updates</span>
+            <History size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline text-white leading-none uppercase tracking-widest leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t('nav_updates')}</span>
           </button>
           <button onClick={handleLogout} className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-2 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl text-red-500 hover:bg-red-500/10 transition-all text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
             <LogOut size={16} className="md:w-[18px] md:h-[18px] text-white leading-none text-white leading-none text-white leading-none text-white leading-none" />
@@ -571,14 +571,14 @@ const App: React.FC = () => {
                 onClick={() => setShowHydrants(!showHydrants)}
               >
                 {showHydrants ? <EyeOff size={16} className="text-accent md:w-5 md:h-5 text-white leading-none text-white leading-none" /> : <Droplets size={16} className="text-accent md:w-5 md:h-5 text-white leading-none text-white leading-none" />}
-                <span className="text-white leading-none uppercase text-white leading-none text-white leading-none">{showHydrants ? "Aus" : "Hydranten"}</span>
+                <span className="text-white leading-none uppercase text-white leading-none text-white leading-none">{showHydrants ? t('toggle_off') : t('toggle_hydrants')}</span>
               </button>
               <button 
                 className="bg-glass-bg backdrop-blur-lg border border-glass-border text-white px-3 py-2 md:px-4.5 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-2 cursor-pointer shadow-2xl transition-all duration-300 font-bold text-[0.7rem] md:text-[0.85rem] hover:bg-surface hover:border-accent active:scale-95 text-white leading-none uppercase tracking-widest text-white leading-none text-white leading-none" 
                 onClick={() => setShowPOIs(!showPOIs)}
               >
                 {showPOIs ? <EyeOff size={16} className="text-yellow-500 md:w-5 md:h-5 text-white leading-none text-white leading-none" /> : <MapIcon size={16} className="text-yellow-500 md:w-5 md:h-5 text-white leading-none text-white leading-none" />}
-                <span className="text-white leading-none uppercase text-white leading-none text-white leading-none">{showPOIs ? "Aus" : "POIs"}</span>
+                <span className="text-white leading-none uppercase text-white leading-none text-white leading-none">{showPOIs ? t('toggle_off') : t('toggle_pois')}</span>
               </button>
             </div>
 

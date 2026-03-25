@@ -63,7 +63,8 @@ const MapResizer = () => {
   useEffect(() => {
     const handleResize = () => { map.invalidateSize(); };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const timer = setTimeout(() => map.invalidateSize(), 100);
+    return () => { window.removeEventListener('resize', handleResize); clearTimeout(timer); };
   }, [map]);
   return null;
 };
@@ -495,38 +496,6 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {showRulesModal && (
-          <div className="fixed inset-0 bg-[#0f172a]/90 backdrop-blur-xl flex justify-center items-center z-[9999] animate-modal-fade px-4 text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-            <div className="bg-surface w-full max-w-[650px] p-6 md:p-10 rounded-3xl md:rounded-[40px] border border-glass-border shadow-[0_40px_100px_-20px_rgba(0,0,0,0.7)] text-left relative overflow-hidden animate-modal-scale max-h-[90vh] overflow-y-auto text-white leading-none text-white leading-none text-white leading-none">
-              <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(255,82,82,0.05)_0%,transparent_70%)] pointer-events-none z-0 text-white leading-none text-white leading-none text-white leading-none"></div>
-              <div className="flex items-center gap-4 md:gap-5 mb-6 md:mb-7.5 relative z-10 text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                <Zap size={28} className="text-primary md:w-8 md:h-8 text-white leading-none text-white leading-none text-white leading-none text-white leading-none" /> 
-                <h2 className="text-[1.5rem] md:text-[2.2rem] font-black m-0 tracking-tight leading-none uppercase text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t('rules_title')}</h2>
-              </div>
-              <div className="grid grid-cols-1 gap-3 md:gap-4 mb-8 md:mb-[35px] relative z-10 text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                {[
-                  { icon: Target, color: 'var(--accent)', title: 'rule_base_title', desc: 'rule_base_desc' },
-                  { icon: Clock, color: 'var(--primary)', title: 'rule_time_title', desc: 'rule_time_desc' },
-                  { icon: Zap, color: '#4ade80', title: 'rule_speed_title', desc: 'rule_speed_desc' },
-                  { icon: Flame, color: '#fb923c', title: 'rule_streak_title', desc: 'rule_streak_desc' },
-                  { icon: Compass, color: 'var(--accent)', title: 'rule_discovery_title', desc: 'rule_discovery_desc' }
-                ].map((rule, i) => (
-                  <div key={i} className="flex items-start gap-4 md:gap-5 bg-white/[0.03] p-4 md:p-5 rounded-xl md:rounded-[20px] border border-white/[0.05] transition-all duration-200 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                    <rule.icon size={24} className="md:w-7 md:h-7 shrink-0 mt-1 text-white leading-none text-white leading-none text-white leading-none text-white leading-none" color={rule.color} /> 
-                    <div className="text-white leading-none text-white leading-none text-white leading-none">
-                      <h4 className="m-0 mb-0.5 md:mb-1 text-[0.9rem] md:text-[1rem] font-extrabold text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t(rule.title)}</h4>
-                      <p className="m-0 text-[0.8rem] md:text-[0.9rem] text-text-muted leading-relaxed text-white font-sans text-white leading-none text-white leading-none text-white leading-none text-white leading-none" dangerouslySetInnerHTML={{ __html: t(rule.desc) }}></p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <button className="w-full py-3.5 md:py-4 px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl text-[1rem] md:text-[1.1rem] font-black cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all relative z-10 text-white leading-none uppercase text-white leading-none text-white leading-none text-white leading-none" onClick={() => { setShowRulesModal(false); startCompetition(); }}>
-                <Play size={20} fill="currentColor" className="text-white leading-none text-white leading-none" /> {t('rules_start')}
-              </button>
-            </div>
-          </div>
-        )}
-
         {mode === 'learn' && streets.length > 0 && (
           <div className="absolute inset-0 w-full h-full z-1 touch-none text-white leading-none text-white leading-none text-white leading-none">
             <MapContainer key={`map-learn-${streets.length}`} center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
@@ -594,26 +563,10 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {mode === 'compete' && currentStreet && !showRulesModal && (
-          <div className="flex flex-col h-full w-full relative text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-            <div className="flex justify-between absolute top-3 md:top-5 inset-x-3 md:inset-x-5 z-[1000] gap-2 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-              <div className="bg-glass-bg backdrop-blur-lg px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-glass-border shadow-2xl font-black flex items-center gap-1.5 text-[0.7rem] md:text-base text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none"><Trophy size={14} className="md:w-4 md:h-4 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" /> {t('round')}: {totalQuestions}/10</div>
-              <div className={`bg-glass-bg backdrop-blur-lg px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-glass-border shadow-2xl font-black flex items-center gap-1.5 text-[0.7rem] md:text-base text-white leading-none text-white leading-none ${streak >= 3 ? 'animate-pulse text-primary border-primary/30' : ''}`}>
-                {score.toLocaleString()} <span className="hidden xs:inline text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">PTS</span>
-                {streak >= 3 && <span className="text-[0.6rem] bg-primary text-white px-1 rounded ml-1 text-white leading-none font-sans font-black text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">x{streak >= 10 ? '3' : streak >= 5 ? '2' : '1.5'}</span>}
-                {streak >= 3 && <Flame size={14} className="text-[#fb923c] md:w-4 md:h-4 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" />}
-              </div>
-            </div>
-
-            <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 w-[180px] md:w-[260px] bg-glass-bg backdrop-blur-md p-1 px-3 rounded-full md:rounded-[20px] z-[1000] border border-glass-border flex items-center gap-2 md:gap-3 shadow-2xl text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-              <div className="flex-1 h-1 md:h-1.5 bg-white/5 rounded-full overflow-hidden text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                <div className="h-full rounded-full transition-all duration-100 linear" style={{ width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`, backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)' }}></div>
-              </div>
-              <div className="text-[0.7rem] md:text-[0.8rem] font-black text-white min-w-[25px] md:min-w-[35px] text-right tabular-nums text-white leading-none font-sans text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{Math.ceil(timeLeft)}s</div>
-            </div>
-
-            <div className="absolute inset-0 w-full h-full z-1 touch-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-              <MapContainer key={`map-compete-${currentStreet.id}`} center={BASSERSDORF_CENTER} zoom={17} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+        {mode === 'compete' && (
+          <div className="absolute inset-0 w-full h-full text-white leading-none">
+            <div className="absolute inset-0 w-full h-full z-1 touch-none">
+              <MapContainer key="map-compete" center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <LayersControl position="topright">
                   <LayersControl.BaseLayer checked name={t('map_stumm')}>
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution='&copy; OSM' maxZoom={22} />
@@ -621,7 +574,7 @@ const App: React.FC = () => {
                   <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
                 </LayersControl>
                 <MapResizer /><MapTracker setZoom={setCurrentZoom} setBounds={setMapBounds} />
-                {currentStreet.coordinates.map((path, idx) => (
+                {currentStreet && currentStreet.coordinates.map((path, idx) => (
                   <Polyline key={idx} positions={path} pathOptions={{ color: "var(--primary)", className: "pulse-line" }} />
                 ))}
                 {visibleHydrants.map(h => (
@@ -629,48 +582,102 @@ const App: React.FC = () => {
                     <Tooltip className="street-tooltip text-white leading-none font-sans text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">Hydrant #{h.id}</Tooltip>
                   </CircleMarker>
                 ))}
-                <MapFocus coords={currentStreet.coordinates} />
+                {currentStreet && <MapFocus coords={currentStreet.coordinates} />}
               </MapContainer>
             </div>
 
-            <div className="absolute bottom-4 md:bottom-[30px] left-1/2 -translate-x-1/2 w-[94%] md:w-[90%] max-w-[600px] bg-glass-bg backdrop-blur-[24px] p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl z-[1000] text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-              {feedback ? (
-                <div className="flex flex-col items-center gap-3 md:gap-[15px] text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                  <div className={`flex flex-col items-center gap-2 md:gap-[15px] ${feedback === 'correct' ? 'text-[#4ade80]' : 'text-primary'} text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none`}>
-                    <div className="mb-1 md:mb-2 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{feedback === 'correct' ? <CheckCircle2 size={48} className="icon-pulse md:w-16 md:h-16 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" /> : <XCircle size={48} className="icon-shake md:w-16 md:h-16 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" />}</div>
-                    <div className="text-center text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                      <h2 className="text-[1.5rem] md:text-[2.2rem] font-black mb-0.5 md:mb-1 leading-none uppercase tracking-tighter text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t(feedback)}</h2>
-                      {feedback !== 'correct' && <p className="text-[0.9rem] md:text-[1.1rem] font-bold text-white/80 text-white leading-none font-sans text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t('correct_is', { name: currentStreet?.name })}</p>}
-                      {feedback === 'correct' && (
-                        <div className="flex flex-col items-center gap-0.5 md:gap-1 mt-1 md:mt-2 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                          {streak >= 3 && <p className="text-[#fb923c] font-black text-[1rem] md:text-[1.2rem] text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t('streak_bonus', { count: streak })}</p>}
-                          {lastDiscoveryBonus && <p className="text-[#4ade80] font-black text-[0.9rem] md:text-[1.1rem] text-white leading-none uppercase font-sans text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t('discovery_bonus_label')}</p>}
+            {showRulesModal && (
+              <div className="absolute inset-0 bg-black/40 flex justify-center items-center z-[9999] animate-modal-fade px-4 text-white leading-none">
+                <div className="bg-surface w-full max-w-[650px] p-6 md:p-10 rounded-3xl md:rounded-[40px] border border-glass-border shadow-[0_40px_100px_-20px_rgba(0,0,0,0.7)] text-left relative overflow-hidden animate-modal-scale max-h-[90vh] overflow-y-auto text-white leading-none">
+                  <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(255,82,82,0.05)_0%,transparent_70%)] pointer-events-none z-0"></div>
+                  <div className="flex items-center gap-4 md:gap-5 mb-6 md:mb-7.5 relative z-10">
+                    <Zap size={28} className="text-primary md:w-8 md:h-8" />
+                    <h2 className="text-[1.5rem] md:text-[2.2rem] font-black m-0 tracking-tight leading-none uppercase">{t('rules_title')}</h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 md:gap-4 mb-8 md:mb-[35px] relative z-10">
+                    {[
+                      { icon: Target, color: 'var(--accent)', title: 'rule_base_title', desc: 'rule_base_desc' },
+                      { icon: Clock, color: 'var(--primary)', title: 'rule_time_title', desc: 'rule_time_desc' },
+                      { icon: Zap, color: '#4ade80', title: 'rule_speed_title', desc: 'rule_speed_desc' },
+                      { icon: Flame, color: '#fb923c', title: 'rule_streak_title', desc: 'rule_streak_desc' },
+                      { icon: Compass, color: 'var(--accent)', title: 'rule_discovery_title', desc: 'rule_discovery_desc' }
+                    ].map((rule, i) => (
+                      <div key={i} className="flex items-start gap-4 md:gap-5 bg-white/[0.03] p-4 md:p-5 rounded-xl md:rounded-[20px] border border-white/[0.05] transition-all duration-200">
+                        <rule.icon size={24} className="md:w-7 md:h-7 shrink-0 mt-1" color={rule.color} />
+                        <div>
+                          <h4 className="m-0 mb-0.5 md:mb-1 text-[0.9rem] md:text-[1rem] font-extrabold">{t(rule.title)}</h4>
+                          <p className="m-0 text-[0.8rem] md:text-[0.9rem] text-text-muted leading-relaxed font-sans" dangerouslySetInnerHTML={{ __html: t(rule.desc) }}></p>
                         </div>
-                      )}
-                    </div>
-                    <div className="w-full mt-2 md:mt-[15px] text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                      {totalQuestions < 10 ? (
-                        <button onClick={nextQuestion} className="w-full py-3.5 md:py-4 px-6 md:px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl font-black text-[1rem] md:text-[1.1rem] cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all text-white leading-none uppercase tracking-widest leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                          <span>{t('next_street')}</span> <ChevronRight size={18} className="md:w-5 md:h-5 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" />
-                        </button>
-                      ) : (
-                        <button onClick={() => setMode('leaderboard')} className="w-full py-3.5 md:py-4 px-6 md:px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl font-black text-[1rem] md:text-[1.1rem] cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all border-2 border-accent/30 text-white leading-none uppercase tracking-widest leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                          <Trophy size={18} className="md:w-5 md:h-5 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" /> <span>{t('to_leaderboard')}</span>
-                        </button>
-                      )}
-                    </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="w-full py-3.5 md:py-4 px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl text-[1rem] md:text-[1.1rem] font-black cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all relative z-10 uppercase" onClick={() => { setShowRulesModal(false); startCompetition(); }}>
+                    <Play size={20} fill="currentColor" /> {t('rules_start')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {currentStreet && !showRulesModal && (
+              <>
+                <div className="flex justify-between absolute top-3 md:top-5 inset-x-3 md:inset-x-5 z-[1000] gap-2 text-white leading-none">
+                  <div className="bg-glass-bg backdrop-blur-lg px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-glass-border shadow-2xl font-black flex items-center gap-1.5 text-[0.7rem] md:text-base"><Trophy size={14} className="md:w-4 md:h-4" /> {t('round')}: {totalQuestions}/10</div>
+                  <div className={`bg-glass-bg backdrop-blur-lg px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-glass-border shadow-2xl font-black flex items-center gap-1.5 text-[0.7rem] md:text-base ${streak >= 3 ? 'animate-pulse text-primary border-primary/30' : ''}`}>
+                    {score.toLocaleString()} <span className="hidden xs:inline">PTS</span>
+                    {streak >= 3 && <span className="text-[0.6rem] bg-primary text-white px-1 rounded ml-1 font-sans font-black">x{streak >= 10 ? '3' : streak >= 5 ? '2' : '1.5'}</span>}
+                    {streak >= 3 && <Flame size={14} className="text-[#fb923c] md:w-4 md:h-4" />}
                   </div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none font-sans uppercase font-bold text-sm tracking-tight leading-none text-center">
-                  {options.map(opt => (
-                    <button key={opt} onClick={() => handleAnswer(opt)} className="p-3.5 md:p-[1.2rem] text-[0.85rem] md:text-[0.95rem] font-bold bg-white/5 border border-white/10 text-white cursor-pointer rounded-xl md:rounded-[18px] transition-all duration-200 min-h-[50px] md:min-h-[70px] flex items-center justify-center text-center hover:bg-primary active:scale-95 active:bg-primary text-white leading-none uppercase tracking-tight leading-none text-center text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                      {opt}
-                    </button>
-                  ))}
+
+                <div className="absolute top-14 md:top-20 left-1/2 -translate-x-1/2 w-[180px] md:w-[260px] bg-glass-bg backdrop-blur-md p-1 px-3 rounded-full md:rounded-[20px] z-[1000] border border-glass-border flex items-center gap-2 md:gap-3 shadow-2xl">
+                  <div className="flex-1 h-1 md:h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-100 linear" style={{ width: `${(timeLeft / QUESTION_TIME_LIMIT) * 100}%`, backgroundColor: timeLeft < 5 ? 'var(--primary)' : 'var(--accent)' }}></div>
+                  </div>
+                  <div className="text-[0.7rem] md:text-[0.8rem] font-black text-white min-w-[25px] md:min-w-[35px] text-right tabular-nums font-sans">{Math.ceil(timeLeft)}s</div>
                 </div>
-              )}
-            </div>
+              </>
+            )}
+
+            {currentStreet && !showRulesModal && (
+              <div className="absolute bottom-4 md:bottom-[30px] left-1/2 -translate-x-1/2 w-[94%] md:w-[90%] max-w-[600px] bg-glass-bg backdrop-blur-[24px] p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl z-[1000] text-white leading-none">
+                {feedback ? (
+                  <div className="flex flex-col items-center gap-3 md:gap-[15px]">
+                    <div className={`flex flex-col items-center gap-2 md:gap-[15px] ${feedback === 'correct' ? 'text-[#4ade80]' : 'text-primary'}`}>
+                      <div className="mb-1 md:mb-2">{feedback === 'correct' ? <CheckCircle2 size={48} className="icon-pulse md:w-16 md:h-16" /> : <XCircle size={48} className="icon-shake md:w-16 md:h-16" />}</div>
+                      <div className="text-center">
+                        <h2 className="text-[1.5rem] md:text-[2.2rem] font-black mb-0.5 md:mb-1 leading-none uppercase tracking-tighter">{t(feedback)}</h2>
+                        {feedback !== 'correct' && <p className="text-[0.9rem] md:text-[1.1rem] font-bold text-white/80 font-sans">{t('correct_is', { name: currentStreet?.name })}</p>}
+                        {feedback === 'correct' && (
+                          <div className="flex flex-col items-center gap-0.5 md:gap-1 mt-1 md:mt-2">
+                            {streak >= 3 && <p className="text-[#fb923c] font-black text-[1rem] md:text-[1.2rem]">{t('streak_bonus', { count: streak })}</p>}
+                            {lastDiscoveryBonus && <p className="text-[#4ade80] font-black text-[0.9rem] md:text-[1.1rem] uppercase font-sans">{t('discovery_bonus_label')}</p>}
+                          </div>
+                        )}
+                      </div>
+                      <div className="w-full mt-2 md:mt-[15px]">
+                        {totalQuestions < 10 ? (
+                          <button onClick={nextQuestion} className="w-full py-3.5 md:py-4 px-6 md:px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl font-black text-[1rem] md:text-[1.1rem] cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all uppercase tracking-widest">
+                            <span>{t('next_street')}</span> <ChevronRight size={18} className="md:w-5 md:h-5" />
+                          </button>
+                        ) : (
+                          <button onClick={() => setMode('leaderboard')} className="w-full py-3.5 md:py-4 px-6 md:px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl font-black text-[1rem] md:text-[1.1rem] cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all border-2 border-accent/30 uppercase tracking-widest">
+                            <Trophy size={18} className="md:w-5 md:h-5" /> <span>{t('to_leaderboard')}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 font-sans uppercase font-bold text-sm tracking-tight text-center">
+                    {options.map(opt => (
+                      <button key={opt} onClick={() => handleAnswer(opt)} className="p-3.5 md:p-[1.2rem] text-[0.85rem] md:text-[0.95rem] font-bold bg-white/5 border border-white/10 text-white cursor-pointer rounded-xl md:rounded-[18px] transition-all duration-200 min-h-[50px] md:min-h-[70px] flex items-center justify-center text-center hover:bg-primary active:scale-95 active:bg-primary uppercase tracking-tight">
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

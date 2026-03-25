@@ -10,6 +10,14 @@ export interface Hydrant {
   lon: number;
 }
 
+export interface POI {
+  id: string;
+  name: string;
+  category: string;
+  lat: number;
+  lon: number;
+}
+
 const OVERPASS_ENDPOINTS = [
   "https://overpass.osm.ch/api/interpreter",
   "https://overpass-api.de/api/interpreter",
@@ -93,6 +101,35 @@ export async function fetchBassersdorfHydrants(): Promise<Hydrant[]> {
     const data = await fetchFromOverpass(query);
     if (!data || !data.elements) return [];
     return data.elements.map((el: any) => ({ id: el.id, lat: el.lat, lon: el.lon }));
+  } catch (error) { return []; }
+}
+
+export async function fetchBassersdorfPOIs(): Promise<POI[]> {
+  const query = `
+    [out:json][timeout:30];
+    area["name"="Bassersdorf"]["admin_level"="8"]->.searchArea;
+    (
+      node["amenity"~"^(restaurant|cafe|fast_food|bank|pharmacy|post_office|library|townhall|fire_station|police)$"]["name"](area.searchArea);
+      node["shop"~"^(supermarket|bakery|butcher|kiosk|chemist)$"]["name"](area.searchArea);
+      node["tourism"~"^(viewpoint|hotel|museum)$"]["name"](area.searchArea);
+      way["amenity"~"^(restaurant|cafe|fast_food|bank|pharmacy|post_office|library|townhall|fire_station|police)$"]["name"](area.searchArea);
+      way["shop"~"^(supermarket|bakery|butcher|kiosk|chemist)$"]["name"](area.searchArea);
+    );
+    out center;
+  `;
+  try {
+    const data = await fetchFromOverpass(query);
+    if (!data || !data.elements) return [];
+    
+    return data.elements
+      .filter((el: any) => el.tags && el.tags.name)
+      .map((el: any) => ({
+        id: `poi-${el.id}`,
+        name: el.tags.name,
+        category: el.tags.amenity || el.tags.shop || el.tags.tourism || 'POI',
+        lat: el.lat || el.center.lat,
+        lon: el.lon || el.center.lon
+      }));
   } catch (error) { return []; }
 }
 

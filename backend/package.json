@@ -1,0 +1,16 @@
+{
+  "name": "lokalmatador-backend",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.700.0",
+    "@aws-sdk/lib-dynamodb": "^3.700.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/uuid": "^10.0.0",
+    "sst": "latest",
+    "typescript": "^5.0.0"
+  }
+}

@@ -18,6 +18,65 @@ import {
 } from 'lucide-react';
 
 const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
+
+// Inject SVG animation keyframes once — raw <style> tag bypasses CSS bundling entirely
+const SVG_KEYFRAMES = `
+@keyframes dash { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+@keyframes march { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -52; } }
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(255,82,82,0.7)) drop-shadow(0 0 14px rgba(255,82,82,0.35)); }
+  50% { filter: drop-shadow(0 0 10px rgba(255,82,82,0.9)) drop-shadow(0 0 24px rgba(255,82,82,0.5)); }
+}`;
+
+// Animated polyline that applies inline styles directly on the SVG <path> after mount,
+// overriding Leaflet's setAttribute calls which block CSS class-based animations.
+const ANIMATED_STYLE = 'stroke:#ff5252;stroke-dasharray:16 10;stroke-width:7;stroke-opacity:1;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,82,82,0.7)) drop-shadow(0 0 14px rgba(255,82,82,0.35));animation:march 1.2s linear infinite,glow-pulse 2s ease-in-out infinite;';
+const SVG_ATTRS = ['stroke','stroke-opacity','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset'];
+
+const AnimatedPolyline = ({ positions, eventHandlers, children }: {
+  positions: [number, number][][]  | [number, number][];
+  eventHandlers?: Record<string, () => void>;
+  children?: React.ReactNode;
+}) => {
+  const polyRefs = useRef<(L.Polyline | null)[]>([]);
+
+  // Normalize: always work with [number,number][][]
+  const paths = (Array.isArray(positions[0]?.[0]) && Array.isArray((positions[0] as unknown[])[0]))
+    ? positions as [number,number][][]
+    : [positions as [number,number][]];
+
+  // Apply styles after every render — must run after react-leaflet's useEffect calls setStyle
+  useEffect(() => {
+    const patch = () => {
+      for (const poly of polyRefs.current) {
+        if (!poly) continue;
+        const svgPath = (poly as unknown as { _path?: SVGPathElement })._path;
+        if (!svgPath) continue;
+        for (const a of SVG_ATTRS) svgPath.removeAttribute(a);
+        svgPath.style.cssText = ANIMATED_STYLE;
+      }
+    };
+    // Double rAF ensures we run after react-leaflet's useEffect + Leaflet's rendering
+    requestAnimationFrame(() => requestAnimationFrame(patch));
+  });
+
+  return (
+    <>
+      {paths.map((path, idx) => (
+        <Polyline
+          key={idx}
+          ref={(el) => { polyRefs.current[idx] = el; }}
+          positions={path}
+          pathOptions={{ color: '#ff5252', weight: 7, opacity: 1 }}
+          eventHandlers={eventHandlers}
+          interactive={!!eventHandlers}
+        >
+          {children}
+        </Polyline>
+      ))}
+    </>
+  );
+};
 const QUESTION_TIME_LIMIT = 20;
 
 const RANKS = [
@@ -141,6 +200,13 @@ const App: React.FC = () => {
   const [roundsPlayedInSession, setRoundsPlayedInSession] = useState(0);
   const [showLanding, setShowLanding] = useState(!user);
   const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = SVG_KEYFRAMES;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -384,51 +450,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Handle Release Notes mode
-  if (mode === 'release_notes') {
-    return (
-      <div className="w-full h-screen bg-bg overflow-y-auto text-white leading-none">
-        <div className="py-8 md:py-12 px-4 md:px-6 max-w-[900px] mx-auto text-white text-center leading-none">
-          <div className="flex items-center justify-center gap-3 md:gap-4 mb-8 md:mb-10 text-white leading-none">
-            <History size={28} className="text-primary md:w-8 md:h-8 text-white leading-none" /> 
-            <h2 className="text-[1.8rem] md:text-[2.5rem] font-black tracking-tight leading-none uppercase text-white leading-none">Release Notes</h2>
-          </div>
-          
-          <div className="flex flex-col gap-6 md:gap-8 text-left text-white leading-none">
-            <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl leading-none">
-              <div className="flex justify-between items-start mb-4 leading-none">
-                <div className="bg-primary text-white px-3.5 py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] uppercase tracking-wider leading-none">v2.1.0</div>
-                <span className="text-text-muted text-[0.65rem] md:text-xs font-bold uppercase tracking-widest leading-none">March 18, 2026</span>
-              </div>
-              <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 uppercase tracking-tight leading-tight leading-none text-white leading-none">POIs & Enhanced Training</h3>
-              <ul className="p-0 list-none flex flex-col gap-3 leading-none">
-                <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none">🍴 **POIs Integrated**: Restaurants, shops, and public buildings are now on the map.</li>
-                <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none">🎯 **POI Quiz**: Competition mode now includes questions about local points of interest.</li>
-                <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none">🔘 **Overlay Toggles**: Improved mobile-optimized toggles for hydrants and POIs.</li>
-              </ul>
-            </div>
-
-            <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl leading-none">
-              <div className="flex justify-between items-start mb-4 leading-none">
-                <div className="bg-primary text-white px-3.5 py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] uppercase tracking-wider leading-none">v2.0.0</div>
-                <span className="text-text-muted text-[0.65rem] md:text-xs font-bold uppercase tracking-widest leading-none">March 17, 2026</span>
-              </div>
-              <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 uppercase tracking-tight leading-tight text-white leading-none text-white leading-none">Mobile-First & UI Overhaul</h3>
-              <ul className="p-0 list-none flex flex-col gap-3 leading-none text-white leading-none">
-                <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none">📱 **Mobile-First**: Complete interface overhaul for perfect usage on smartphones.</li>
-                <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none text-white leading-none text-white leading-none">🎨 **Tailwind CSS**: Refactored to Tailwind CSS v4 for a modern and fast UI.</li>
-                <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">🏠 **Landing Page**: New informative home page explaining the mission.</li>
-              </ul>
-            </div>
-          </div>
-          
-          <button onClick={() => { if (!user) setMode('learn'); else setMode('learn'); }} className="mt-8 md:mt-12 w-full sm:w-auto bg-transparent border border-glass-border text-text-muted px-6 py-3 rounded-xl cursor-pointer font-bold text-[0.9rem] hover:bg-white/5 hover:text-white active:scale-95 transition-all uppercase tracking-widest text-white leading-none text-white leading-none text-white leading-none">
-            {user ? t('back_to_learn') : "CLOSE"}
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={`grid grid-rows-[auto_1fr] h-screen h-[100dvh] w-screen overflow-hidden ${isEmergencyActive ? 'emergency-lights' : ''} text-white leading-none`}>
@@ -508,18 +529,28 @@ const App: React.FC = () => {
               <MapResizer /><MapTracker setZoom={setCurrentZoom} setBounds={setMapBounds} />
               {visibleStreets.map(s => (
                 <React.Fragment key={s.id}>
-                  {s.coordinates.map((path, idx) => (
-                    <Polyline 
-                      key={`${s.id}-${idx}-${selectedStreetId === s.id}`} positions={path} 
-                      pathOptions={{
-                        color: selectedStreetId === s.id ? "#ff5252" : (knownStreetIds.includes(s.id) ? "#4ade80" : "var(--accent)"),
-                        weight: selectedStreetId === s.id ? 7 : 4, opacity: selectedStreetId === s.id ? 1 : 0.6, className: selectedStreetId === s.id ? "selected-street-line" : ""
-                      }}
-                      eventHandlers={{ click: () => setSelectedStreetId(s.id) }} interactive={true}
+                  {selectedStreetId === s.id ? (
+                    <AnimatedPolyline
+                      key={`${s.id}-selected`}
+                      positions={s.coordinates}
+                      eventHandlers={{ click: () => setSelectedStreetId(s.id) }}
                     >
                       <Tooltip permanent={false} className="street-tooltip text-white leading-none font-sans font-black text-white leading-none text-white leading-none">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
-                    </Polyline>
-                  ))}
+                    </AnimatedPolyline>
+                  ) : (
+                    s.coordinates.map((path, idx) => (
+                      <Polyline
+                        key={`${s.id}-${idx}`} positions={path}
+                        pathOptions={{
+                          color: knownStreetIds.includes(s.id) ? "#4ade80" : "var(--accent)",
+                          weight: 4, opacity: 0.6
+                        }}
+                        eventHandlers={{ click: () => setSelectedStreetId(s.id) }} interactive={true}
+                      >
+                        <Tooltip permanent={false} className="street-tooltip text-white leading-none font-sans font-black text-white leading-none text-white leading-none">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
+                      </Polyline>
+                    ))
+                  )}
                 </React.Fragment>
               ))}
               {visibleHydrants.map(h => (
@@ -574,9 +605,9 @@ const App: React.FC = () => {
                   <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
                 </LayersControl>
                 <MapResizer /><MapTracker setZoom={setCurrentZoom} setBounds={setMapBounds} />
-                {currentStreet && currentStreet.coordinates.map((path, idx) => (
-                  <Polyline key={idx} positions={path} pathOptions={{ color: "var(--primary)", className: "pulse-line" }} />
-                ))}
+                {currentStreet && (
+                  <AnimatedPolyline positions={currentStreet.coordinates} />
+                )}
                 {visibleHydrants.map(h => (
                   <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#38bdf8', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}>
                     <Tooltip className="street-tooltip text-white leading-none font-sans text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">Hydrant #{h.id}</Tooltip>

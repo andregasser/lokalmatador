@@ -1,0 +1,19 @@
+/* Leaflet Overrides — tooltip and container styles only.
+   SVG animation styles (pulse-line, selected-street-line) are injected
+   at runtime via App.tsx to bypass CSS bundling issues. */
+
+.leaflet-container { height: 100% !important; width: 100% !important; background: #1e293b !important; outline: none; }
+.leaflet-dark { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+
+.leaflet-tooltip.street-tooltip {
+  background-color: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  color: white;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  font-size: 0.875rem;
+  text-shadow: none !important;
+}
+.leaflet-tooltip.street-tooltip:before { border-color: transparent !important; }

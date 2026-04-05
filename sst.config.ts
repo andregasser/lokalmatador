@@ -8,6 +8,9 @@ export default $config({
       home: "aws",
     };
   },
+  providers: {
+    aws: { profile: "private" },
+  },
   async run() {
     // ── DynamoDB Tables ──────────────────────────────────────────
     const leaderboardTable = new sst.aws.Dynamo("Leaderboard", {

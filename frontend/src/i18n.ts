@@ -87,7 +87,19 @@ const resources = {
       "no_account": "Noch kein Konto?",
       "has_account": "Bereits registriert?",
       "register_success": "Registrierung erfolgreich! Bitte bestätige deine E-Mail.",
-      "auth_error": "Authentifizierungsfehler"
+      "auth_error": "Authentifizierungsfehler",
+      "cognito_password_uppercase": "Das Passwort muss Grossbuchstaben enthalten.",
+      "cognito_password_lowercase": "Das Passwort muss Kleinbuchstaben enthalten.",
+      "cognito_password_number": "Das Passwort muss Zahlen enthalten.",
+      "cognito_password_special": "Das Passwort muss Sonderzeichen enthalten.",
+      "cognito_password_length": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+      "cognito_password_policy": "Das Passwort erfüllt die Anforderungen nicht.",
+      "cognito_user_exists": "Ein Konto mit dieser E-Mail existiert bereits.",
+      "cognito_invalid_code": "Ungültiger Bestätigungscode.",
+      "cognito_expired_code": "Der Bestätigungscode ist abgelaufen.",
+      "cognito_not_authorized": "E-Mail oder Passwort ist falsch.",
+      "cognito_user_not_confirmed": "Bitte bestätige zuerst deine E-Mail.",
+      "cognito_limit_exceeded": "Zu viele Versuche. Bitte warte einen Moment."
     }
   },
   en: {
@@ -174,7 +186,19 @@ const resources = {
       "no_account": "No account yet?",
       "has_account": "Already registered?",
       "register_success": "Registration successful! Please confirm your email.",
-      "auth_error": "Authentication error"
+      "auth_error": "Authentication error",
+      "cognito_password_uppercase": "Password must have uppercase characters.",
+      "cognito_password_lowercase": "Password must have lowercase characters.",
+      "cognito_password_number": "Password must have numeric characters.",
+      "cognito_password_special": "Password must have special characters.",
+      "cognito_password_length": "Password must be at least 8 characters long.",
+      "cognito_password_policy": "Password does not meet the requirements.",
+      "cognito_user_exists": "An account with this email already exists.",
+      "cognito_invalid_code": "Invalid confirmation code.",
+      "cognito_expired_code": "The confirmation code has expired.",
+      "cognito_not_authorized": "Incorrect email or password.",
+      "cognito_user_not_confirmed": "Please confirm your email first.",
+      "cognito_limit_exceeded": "Too many attempts. Please wait a moment."
     }
   }
 };

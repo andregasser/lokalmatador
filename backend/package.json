@@ -10,7 +10,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.147",
     "@types/uuid": "^10.0.0",
-    "sst": "latest",
+    "sst": "4.6.9",
     "typescript": "^5.0.0"
   }
 }

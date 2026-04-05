@@ -11,6 +11,15 @@ import confetti from 'canvas-confetti';
 import LandingPage from './LandingPage';
 import { signUp, confirmSignUp, signIn, signOut, getSession, type AuthSession } from './auth';
 import { submitScore, getTopScores, getMyScores, getUserData, saveUserData, type LeaderboardEntry } from './api';
+
+const COGNITO_ERROR_MAP: Record<string, string> = {
+  'Password must have uppercase characters': 'cognito_password_uppercase',
+  'Password must have lowercase characters': 'cognito_password_lowercase',
+  'Password must have numeric characters': 'cognito_password_number',
+  'Password must have special characters': 'cognito_password_special',
+  'Password must have symbol characters': 'cognito_password_special',
+  'Password not long enough': 'cognito_password_length',
+};
 import { 
   BookOpen, Trophy, LayoutList, History, LogOut, 
   Map as MapIcon, CheckCircle2, XCircle, ChevronRight, Play, Zap, 
@@ -28,6 +37,18 @@ const SVG_KEYFRAMES = `
 @keyframes glow-pulse {
   0%, 100% { filter: drop-shadow(0 0 6px rgba(255,82,82,0.7)) drop-shadow(0 0 14px rgba(255,82,82,0.35)); }
   50% { filter: drop-shadow(0 0 10px rgba(255,82,82,0.9)) drop-shadow(0 0 24px rgba(255,82,82,0.5)); }
+}
+@keyframes poi-ping {
+  0% { r: 14; opacity: 0.6; stroke-width: 3; }
+  100% { r: 35; opacity: 0; stroke-width: 1; }
+}
+@keyframes poi-core-pulse {
+  0%, 100% { r: 6; filter: drop-shadow(0 0 4px rgba(255,82,82,0.8)); }
+  50% { r: 8; filter: drop-shadow(0 0 12px rgba(255,82,82,1)) drop-shadow(0 0 24px rgba(255,82,82,0.5)); }
+}
+@keyframes poi-ring-spin {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -50; }
 }`;
 
 // Animated polyline that applies inline styles directly on the SVG <path> after mount,
@@ -79,6 +100,41 @@ const AnimatedPolyline = ({ positions, eventHandlers, children }: {
     </>
   );
 };
+const AnimatedPoiMarker = ({ center }: { center: [number, number] }) => {
+  const coreRef = useRef<L.CircleMarker | null>(null);
+  const ringRef = useRef<L.CircleMarker | null>(null);
+  const pingRef = useRef<L.CircleMarker | null>(null);
+
+  useEffect(() => {
+    const patch = () => {
+      // Core: pulsing glow
+      if (coreRef.current) {
+        const el = (coreRef.current as any)._path as SVGElement | undefined;
+        if (el) el.style.cssText = 'fill:#ff5252;fill-opacity:0.9;stroke:#ff5252;stroke-width:2;animation:poi-core-pulse 1.5s ease-in-out infinite;';
+      }
+      // Ring: spinning dashed border
+      if (ringRef.current) {
+        const el = (ringRef.current as any)._path as SVGElement | undefined;
+        if (el) el.style.cssText = 'fill:none;stroke:#ff5252;stroke-width:2.5;stroke-opacity:0.7;stroke-dasharray:8 6;animation:poi-ring-spin 3s linear infinite;';
+      }
+      // Ping: expanding radar wave
+      if (pingRef.current) {
+        const el = (pingRef.current as any)._path as SVGElement | undefined;
+        if (el) el.style.cssText = 'fill:none;stroke:#ff5252;stroke-width:3;animation:poi-ping 2s ease-out infinite;';
+      }
+    };
+    requestAnimationFrame(() => requestAnimationFrame(patch));
+  });
+
+  return (
+    <>
+      <CircleMarker ref={pingRef} center={center} radius={14} pathOptions={{ color: '#ff5252', fill: false, weight: 3 }} />
+      <CircleMarker ref={ringRef} center={center} radius={14} pathOptions={{ color: '#ff5252', fill: false, weight: 2.5 }} />
+      <CircleMarker ref={coreRef} center={center} radius={6} pathOptions={{ color: '#ff5252', fillColor: '#ff5252', fillOpacity: 0.9, weight: 2 }} />
+    </>
+  );
+};
+
 const QUESTION_TIME_LIMIT = 20;
 
 const RANKS = [
@@ -113,7 +169,11 @@ const MapFocus = ({ coords }: { coords: [number, number][][] | null }) => {
   useEffect(() => {
     if (coords && coords.length > 0) {
       const flatCoords = coords.flat();
-      map.fitBounds(flatCoords as any, { padding: [100, 100], maxZoom: 20 });
+      if (flatCoords.length === 1) {
+        map.setView(flatCoords[0] as any, 17, { animate: true });
+      } else {
+        map.fitBounds(flatCoords as any, { padding: [100, 100], maxZoom: 17 });
+      }
     }
   }, [coords, map]);
   return null;
@@ -188,6 +248,7 @@ const App: React.FC = () => {
 
   // Competition state
   const [currentStreet, setCurrentStreet] = useState<Street | null>(null);
+  const [currentPoi, setCurrentPoi] = useState<POI | null>(null);
   const [options, setOptions] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
@@ -285,6 +346,26 @@ const App: React.FC = () => {
     }
   };
 
+  const translateCognitoError = (err: any): string => {
+    const msg = err?.message || '';
+    // Check for password policy errors (substring match)
+    for (const [pattern, key] of Object.entries(COGNITO_ERROR_MAP)) {
+      if (msg.includes(pattern)) return t(key);
+    }
+    // Check by Cognito error code
+    switch (err?.code || err?.name) {
+      case 'UsernameExistsException': return t('cognito_user_exists');
+      case 'CodeMismatchException': return t('cognito_invalid_code');
+      case 'ExpiredCodeException': return t('cognito_expired_code');
+      case 'NotAuthorizedException': return t('cognito_not_authorized');
+      case 'UserNotConfirmedException': return t('cognito_user_not_confirmed');
+      case 'LimitExceededException':
+      case 'TooManyRequestsException': return t('cognito_limit_exceeded');
+      case 'InvalidPasswordException': return t('cognito_password_policy');
+    }
+    return msg || t('auth_error');
+  };
+
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setAuthError(null);
@@ -296,7 +377,7 @@ const App: React.FC = () => {
       const session = await signIn(email, password);
       setUser(session);
     } catch (err: any) {
-      setAuthError(err.message || t('auth_error'));
+      setAuthError(translateCognitoError(err));
     } finally {
       setAuthLoading(false);
     }
@@ -315,7 +396,7 @@ const App: React.FC = () => {
       setAuthEmail(email);
       setAuthView('confirm');
     } catch (err: any) {
-      setAuthError(err.message || t('auth_error'));
+      setAuthError(translateCognitoError(err));
     } finally {
       setAuthLoading(false);
     }
@@ -330,7 +411,7 @@ const App: React.FC = () => {
       await confirmSignUp(authEmail, code);
       setAuthView('login');
     } catch (err: any) {
-      setAuthError(err.message || t('auth_error'));
+      setAuthError(translateCognitoError(err));
     } finally {
       setAuthLoading(false);
     }
@@ -364,12 +445,14 @@ const App: React.FC = () => {
       const distractors = pois.filter(p => p.name !== correct.name).sort(() => 0.5 - Math.random()).slice(0, 3);
       const allOptions = [correct.name, ...distractors.map(p => p.name)].sort(() => 0.5 - Math.random());
       setCurrentStreet({ id: correct.id, name: correct.name, coordinates: [[ [correct.lat, correct.lon] ]] } as any);
+      setCurrentPoi(correct);
       setOptions(allOptions);
     } else {
       const correct = streets[Math.floor(Math.random() * streets.length)];
       const distractors = streets.filter(s => s.name !== correct.name).sort(() => 0.5 - Math.random()).slice(0, 3);
       const allOptions = [correct.name, ...distractors.map(s => s.name)].sort(() => 0.5 - Math.random());
       setCurrentStreet(correct);
+      setCurrentPoi(null);
       setOptions(allOptions);
     }
     
@@ -720,44 +803,56 @@ const App: React.FC = () => {
                   <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
                 </LayersControl>
                 <MapResizer /><MapTracker setZoom={setCurrentZoom} setBounds={setMapBounds} />
-                {currentStreet && (
+                {currentStreet && !currentPoi && (
                   <AnimatedPolyline positions={currentStreet.coordinates} />
+                )}
+                {currentPoi && (
+                  <AnimatedPoiMarker center={[currentPoi.lat, currentPoi.lon]} />
                 )}
                 {visibleHydrants.map(h => (
                   <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#38bdf8', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}>
-                    <Tooltip className="street-tooltip text-white leading-none font-sans text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">Hydrant #{h.id}</Tooltip>
+                    <Tooltip className="street-tooltip font-sans">Hydrant #{h.id}</Tooltip>
                   </CircleMarker>
                 ))}
-                {currentStreet && <MapFocus coords={currentStreet.coordinates} />}
+                {currentStreet && !currentPoi && <MapFocus coords={currentStreet.coordinates} />}
+                {currentPoi && <MapFocus coords={[[[currentPoi.lat, currentPoi.lon]]]} />}
               </MapContainer>
             </div>
 
             {showRulesModal && (
-              <div className="absolute inset-0 bg-black/40 flex justify-center items-center z-[9999] animate-modal-fade px-4 text-white leading-none">
-                <div className="bg-surface w-full max-w-[650px] p-6 md:p-10 rounded-3xl md:rounded-[40px] border border-glass-border shadow-[0_40px_100px_-20px_rgba(0,0,0,0.7)] text-left relative overflow-hidden animate-modal-scale max-h-[90vh] overflow-y-auto text-white leading-none">
-                  <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(255,82,82,0.05)_0%,transparent_70%)] pointer-events-none z-0"></div>
-                  <div className="flex items-center gap-4 md:gap-5 mb-6 md:mb-7.5 relative z-10">
-                    <Zap size={28} className="text-primary md:w-8 md:h-8" />
-                    <h2 className="text-[1.5rem] md:text-[2.2rem] font-black m-0 tracking-tight leading-none uppercase">{t('rules_title')}</h2>
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[9999] animate-modal-fade px-3 md:px-4">
+                <div className="bg-gradient-to-b from-surface to-[#0f172a] w-full max-w-[520px] p-5 md:p-8 rounded-3xl md:rounded-[36px] border border-glass-border shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] text-left relative overflow-hidden animate-modal-scale">
+                  <div className="absolute top-[-30%] right-[-20%] w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(255,82,82,0.08)_0%,transparent_70%)] pointer-events-none z-0"></div>
+                  <div className="absolute bottom-[-20%] left-[-20%] w-[250px] h-[250px] bg-[radial-gradient(circle,rgba(56,189,248,0.06)_0%,transparent_70%)] pointer-events-none z-0"></div>
+
+                  <div className="flex items-center gap-3 mb-5 md:mb-6 relative z-10">
+                    <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
+                      <Zap size={22} className="text-primary md:w-6 md:h-6" />
+                    </div>
+                    <h2 className="text-[1.3rem] md:text-[1.8rem] font-black m-0 tracking-tight leading-none uppercase">{t('rules_title')}</h2>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 md:gap-4 mb-8 md:mb-[35px] relative z-10">
+
+                  <div className="grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-3 mb-5 md:mb-6 relative z-10">
                     {[
-                      { icon: Target, color: 'var(--accent)', title: 'rule_base_title', desc: 'rule_base_desc' },
-                      { icon: Clock, color: 'var(--primary)', title: 'rule_time_title', desc: 'rule_time_desc' },
-                      { icon: Zap, color: '#4ade80', title: 'rule_speed_title', desc: 'rule_speed_desc' },
-                      { icon: Flame, color: '#fb923c', title: 'rule_streak_title', desc: 'rule_streak_desc' },
-                      { icon: Compass, color: 'var(--accent)', title: 'rule_discovery_title', desc: 'rule_discovery_desc' }
+                      { icon: Target, color: '#38bdf8', bg: 'rgba(56,189,248,0.1)', title: 'rule_base_title', desc: 'rule_base_desc' },
+                      { icon: Clock, color: '#ff5252', bg: 'rgba(255,82,82,0.1)', title: 'rule_time_title', desc: 'rule_time_desc' },
+                      { icon: Zap, color: '#4ade80', bg: 'rgba(74,222,128,0.1)', title: 'rule_speed_title', desc: 'rule_speed_desc' },
+                      { icon: Flame, color: '#fb923c', bg: 'rgba(251,146,60,0.1)', title: 'rule_streak_title', desc: 'rule_streak_desc' },
+                      { icon: Compass, color: '#38bdf8', bg: 'rgba(56,189,248,0.1)', title: 'rule_discovery_title', desc: 'rule_discovery_desc' }
                     ].map((rule, i) => (
-                      <div key={i} className="flex items-start gap-4 md:gap-5 bg-white/[0.03] p-4 md:p-5 rounded-xl md:rounded-[20px] border border-white/[0.05] transition-all duration-200">
-                        <rule.icon size={24} className="md:w-7 md:h-7 shrink-0 mt-1" color={rule.color} />
+                      <div key={i} className={`flex flex-col items-center text-center gap-1.5 p-3 md:p-0 md:flex-row md:items-start md:text-left md:gap-4 rounded-xl md:rounded-[16px] bg-white/[0.03] md:bg-white/[0.03] border border-white/[0.05] md:px-4 md:py-3 ${i === 4 ? 'col-span-2 md:col-span-1' : ''}`}>
+                        <div className="p-2 rounded-lg shrink-0" style={{ backgroundColor: rule.bg }}>
+                          <rule.icon size={18} className="md:w-5 md:h-5" color={rule.color} />
+                        </div>
                         <div>
-                          <h4 className="m-0 mb-0.5 md:mb-1 text-[0.9rem] md:text-[1rem] font-extrabold">{t(rule.title)}</h4>
-                          <p className="m-0 text-[0.8rem] md:text-[0.9rem] text-text-muted leading-relaxed font-sans" dangerouslySetInnerHTML={{ __html: t(rule.desc) }}></p>
+                          <h4 className="m-0 text-[0.75rem] md:text-[0.95rem] font-extrabold leading-tight">{t(rule.title)}</h4>
+                          <p className="m-0 text-[0.65rem] md:text-[0.85rem] text-text-muted leading-snug font-sans hidden md:block">{t(rule.desc).replace(/<[^>]*>/g, '')}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <button className="w-full py-3.5 md:py-4 px-8 bg-primary text-white border-none rounded-xl md:rounded-2xl text-[1rem] md:text-[1.1rem] font-black cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-lg active:scale-95 transition-all relative z-10 uppercase" onClick={() => { setShowRulesModal(false); startCompetition(); }}>
+
+                  <button className="w-full py-3.5 md:py-4 bg-gradient-to-r from-primary to-[#ff7b7b] text-white border-none rounded-xl md:rounded-2xl text-[1rem] md:text-[1.1rem] font-black cursor-pointer flex items-center justify-center gap-2 md:gap-3 shadow-[0_10px_30px_-5px_rgba(255,82,82,0.4)] active:scale-95 hover:-translate-y-0.5 transition-all relative z-10 uppercase tracking-wider" onClick={() => { setShowRulesModal(false); startCompetition(); }}>
                     <Play size={20} fill="currentColor" /> {t('rules_start')}
                   </button>
                 </div>

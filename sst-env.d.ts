@@ -6,9 +6,30 @@
 
 declare module "sst" {
   export interface Resource {
+    "Api": {
+      "type": "sst.aws.ApiGatewayV2"
+      "url": string
+    }
     "Frontend": {
       "type": "sst.aws.StaticSite"
       "url": string
+    }
+    "Leaderboard": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "UserData": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "UserPool": {
+      "id": string
+      "type": "sst.aws.CognitoUserPool"
+    }
+    "WebClient": {
+      "id": string
+      "secret": string
+      "type": "sst.aws.CognitoUserPoolClient"
     }
   }
 }

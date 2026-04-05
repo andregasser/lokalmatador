@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "AWS_PROFILE=private sst dev",
+    "deploy:dev": "AWS_PROFILE=private sst deploy --stage dev",
     "deploy": "AWS_PROFILE=private sst deploy --stage production",
+    "remove:dev": "AWS_PROFILE=private sst remove --stage dev",
     "remove": "AWS_PROFILE=private sst remove --stage production"
   },
   "devDependencies": {
-    "sst": "latest",
+    "sst": "4.6.9",
     "typescript": "^5.0.0"
   }
 }

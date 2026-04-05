@@ -76,7 +76,18 @@ const resources = {
       "nav_updates": "Release Notes",
       "toggle_hydrants": "Hydranten",
       "toggle_pois": "POIs",
-      "toggle_off": "Aus"
+      "toggle_off": "Aus",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "display_name": "Anzeigename",
+      "register": "Registrieren",
+      "confirm_email": "E-Mail bestätigen",
+      "confirmation_code": "Bestätigungscode",
+      "confirm": "Bestätigen",
+      "no_account": "Noch kein Konto?",
+      "has_account": "Bereits registriert?",
+      "register_success": "Registrierung erfolgreich! Bitte bestätige deine E-Mail.",
+      "auth_error": "Authentifizierungsfehler"
     }
   },
   en: {
@@ -152,7 +163,18 @@ const resources = {
       "nav_updates": "Release Notes",
       "toggle_hydrants": "Hydrants",
       "toggle_pois": "POIs",
-      "toggle_off": "Off"
+      "toggle_off": "Off",
+      "email": "Email",
+      "password": "Password",
+      "display_name": "Display Name",
+      "register": "Register",
+      "confirm_email": "Confirm Email",
+      "confirmation_code": "Confirmation Code",
+      "confirm": "Confirm",
+      "no_account": "No account yet?",
+      "has_account": "Already registered?",
+      "register_success": "Registration successful! Please confirm your email.",
+      "auth_error": "Authentication error"
     }
   }
 };

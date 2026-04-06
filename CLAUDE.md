@@ -62,27 +62,59 @@ npm run dev
 
 ## Build & Deploy
 
-**CRITICAL: Deployments use separate AWS accounts via SSO profiles.** Dev deploys to `andregasser-lokalmatador-dev` (account 297088704837), prod to `andregasser-lokalmatador-prod` (account 517506432410). This is enforced in both npm scripts and `sst.config.ts`.
+### AWS Account Structure
+
+Each stage deploys to its own isolated AWS account via AWS Organizations + IAM Identity Center (SSO):
+
+| Stage | AWS Account | SSO Profile | Domain |
+|-------|-------------|-------------|--------|
+| dev | `297088704837` | `andregasser-lokalmatador-dev` | `lokalmatador-dev.andregasser.dev` |
+| production | `517506432410` | `andregasser-lokalmatador-prod` | `lokalmatador.andregasser.dev` |
+
+Management account (`728419557070`, profile `andregasser-management`) hosts Route 53 DNS zones only.
+
+### Deploy to Dev
 
 ```bash
-# SSO login (required once per session, opens browser)
+# 1. SSO login (required once per session, opens browser)
 aws sso login --profile andregasser-lokalmatador-dev
 
-# Install dependencies
+# 2. Deploy (always run from project root!)
+npm run deploy:dev
+```
+
+### Deploy to Production
+
+```bash
+# 1. SSO login
+aws sso login --profile andregasser-lokalmatador-prod
+
+# 2. Deploy
+npm run deploy:prod
+```
+
+### Install Dependencies (first time or after changes)
+
+```bash
 npm install                      # Root (SST CLI)
 cd frontend && npm install       # Frontend
 cd backend && npm install        # Backend
+```
 
-# Deploy
-npm run deploy:dev               # Dev stage → andregasser-lokalmatador-dev account
-npm run deploy:prod              # Production → andregasser-lokalmatador-prod account
+### Remove Stages
 
-# Remove
+```bash
 npm run remove:dev               # Remove dev stage
 npm run remove:prod              # Remove production stage
 ```
 
-SST version is pinned to `4.6.9` in both root and backend `package.json`. Keep these in sync — mismatches cause deploy failures.
+### Important Notes
+
+- **Always run deploy commands from the project root**, not from `frontend/` or `backend/`.
+- SST version is pinned to `4.6.9` in both root and backend `package.json`. Keep these in sync — mismatches cause deploy failures.
+- The `AWS_PROFILE` is set automatically by each npm script. Never override it manually.
+- DNS (Route 53) and ACM certificates are managed outside of SST. Domain records point to CloudFront distributions in the respective accounts.
+- SSO sessions expire after 8 hours. If a deploy fails with an auth error, re-run `aws sso login`.
 
 ## Design Principles
 

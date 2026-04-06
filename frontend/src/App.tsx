@@ -34,26 +34,74 @@ const BASSERSDORF_CENTER: [number, number] = [47.444, 8.625];
 const SVG_KEYFRAMES = `
 @keyframes dash { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
 @keyframes march { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -52; } }
-@keyframes glow-pulse {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(255,82,82,0.7)) drop-shadow(0 0 14px rgba(255,82,82,0.35)); }
-  50% { filter: drop-shadow(0 0 10px rgba(255,82,82,0.9)) drop-shadow(0 0 24px rgba(255,82,82,0.5)); }
+@keyframes glow-pulse-opacity {
+  0%, 100% { stroke-opacity: 0.4; }
+  50% { stroke-opacity: 0.7; }
+}
+.animated-street {
+  stroke: #ff5252 !important;
+  stroke-dasharray: 16 10 !important;
+  stroke-width: 7 !important;
+  stroke-opacity: 1 !important;
+  stroke-linecap: round !important;
+  -webkit-animation: march 1.2s linear infinite;
+  animation: march 1.2s linear infinite;
+}
+.animated-street-glow {
+  stroke: #ff5252 !important;
+  stroke-width: 16 !important;
+  stroke-opacity: 0.4 !important;
+  stroke-linecap: round !important;
+  stroke-dasharray: none !important;
+  -webkit-animation: glow-pulse-opacity 2s ease-in-out infinite;
+  animation: glow-pulse-opacity 2s ease-in-out infinite;
 }
 @keyframes poi-ping {
-  0% { r: 14; opacity: 0.6; stroke-width: 3; }
-  100% { r: 35; opacity: 0; stroke-width: 1; }
+  0% { stroke-opacity: 0.6; stroke-width: 3; }
+  100% { stroke-opacity: 0; stroke-width: 1; }
 }
 @keyframes poi-core-pulse {
-  0%, 100% { r: 6; filter: drop-shadow(0 0 4px rgba(255,82,82,0.8)); }
-  50% { r: 8; filter: drop-shadow(0 0 12px rgba(255,82,82,1)) drop-shadow(0 0 24px rgba(255,82,82,0.5)); }
+  0%, 100% { stroke-opacity: 1; fill-opacity: 0.9; }
+  50% { stroke-opacity: 0.6; fill-opacity: 0.5; }
 }
 @keyframes poi-ring-spin {
   from { stroke-dashoffset: 0; }
   to { stroke-dashoffset: -50; }
+}
+.poi-core {
+  fill: #ff5252 !important;
+  fill-opacity: 0.9 !important;
+  stroke: #ff5252 !important;
+  stroke-width: 2 !important;
+  -webkit-animation: poi-core-pulse 1.5s ease-in-out infinite;
+  animation: poi-core-pulse 1.5s ease-in-out infinite;
+}
+.poi-ring {
+  fill: none !important;
+  stroke: #ff5252 !important;
+  stroke-width: 2.5 !important;
+  stroke-opacity: 0.7 !important;
+  stroke-dasharray: 8 6 !important;
+  -webkit-animation: poi-ring-spin 3s linear infinite;
+  animation: poi-ring-spin 3s linear infinite;
+}
+.poi-ping {
+  fill: none !important;
+  stroke: #ff5252 !important;
+  stroke-width: 3 !important;
+  -webkit-animation: poi-ping 2s ease-out infinite;
+  animation: poi-ping 2s ease-out infinite;
+}
+.poi-glow {
+  fill: #ff5252 !important;
+  fill-opacity: 0.15 !important;
+  stroke: #ff5252 !important;
+  stroke-width: 1 !important;
+  stroke-opacity: 0.3 !important;
 }`;
 
-// Animated polyline that applies inline styles directly on the SVG <path> after mount,
-// overriding Leaflet's setAttribute calls which block CSS class-based animations.
-const ANIMATED_STYLE = 'stroke:#ff5252;stroke-dasharray:16 10;stroke-width:7;stroke-opacity:1;stroke-linecap:round;filter:drop-shadow(0 0 6px rgba(255,82,82,0.7)) drop-shadow(0 0 14px rgba(255,82,82,0.35));animation:march 1.2s linear infinite,glow-pulse 2s ease-in-out infinite;';
+// Animated polyline with glow effect — uses CSS classes for Safari/iOS compatibility.
+// Renders two layers: a wide translucent glow underneath + a dashed animated street on top.
 const SVG_ATTRS = ['stroke','stroke-opacity','stroke-width','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset'];
 
 const AnimatedPolyline = ({ positions, eventHandlers, children }: {
@@ -62,13 +110,14 @@ const AnimatedPolyline = ({ positions, eventHandlers, children }: {
   children?: React.ReactNode;
 }) => {
   const polyRefs = useRef<(L.Polyline | null)[]>([]);
+  const glowRefs = useRef<(L.Polyline | null)[]>([]);
 
   // Normalize: always work with [number,number][][]
   const paths = (Array.isArray(positions[0]?.[0]) && Array.isArray((positions[0] as unknown[])[0]))
     ? positions as [number,number][][]
     : [positions as [number,number][]];
 
-  // Apply styles after every render — must run after react-leaflet's useEffect calls setStyle
+  // Apply CSS classes after every render — must run after react-leaflet's useEffect calls setStyle
   useEffect(() => {
     const patch = () => {
       for (const poly of polyRefs.current) {
@@ -76,7 +125,16 @@ const AnimatedPolyline = ({ positions, eventHandlers, children }: {
         const svgPath = (poly as unknown as { _path?: SVGPathElement })._path;
         if (!svgPath) continue;
         for (const a of SVG_ATTRS) svgPath.removeAttribute(a);
-        svgPath.style.cssText = ANIMATED_STYLE;
+        svgPath.style.cssText = '';
+        svgPath.classList.add('animated-street');
+      }
+      for (const glow of glowRefs.current) {
+        if (!glow) continue;
+        const svgPath = (glow as unknown as { _path?: SVGPathElement })._path;
+        if (!svgPath) continue;
+        for (const a of SVG_ATTRS) svgPath.removeAttribute(a);
+        svgPath.style.cssText = '';
+        svgPath.classList.add('animated-street-glow');
       }
     };
     // Double rAF ensures we run after react-leaflet's useEffect + Leaflet's rendering
@@ -85,6 +143,17 @@ const AnimatedPolyline = ({ positions, eventHandlers, children }: {
 
   return (
     <>
+      {/* Glow layer (underneath) */}
+      {paths.map((path, idx) => (
+        <Polyline
+          key={`glow-${idx}`}
+          ref={(el) => { glowRefs.current[idx] = el; }}
+          positions={path}
+          pathOptions={{ color: '#ff5252', weight: 16, opacity: 0.4 }}
+          interactive={false}
+        />
+      ))}
+      {/* Street layer (on top) */}
       {paths.map((path, idx) => (
         <Polyline
           key={idx}
@@ -104,30 +173,30 @@ const AnimatedPoiMarker = ({ center }: { center: [number, number] }) => {
   const coreRef = useRef<L.CircleMarker | null>(null);
   const ringRef = useRef<L.CircleMarker | null>(null);
   const pingRef = useRef<L.CircleMarker | null>(null);
+  const glowRef = useRef<L.CircleMarker | null>(null);
 
   useEffect(() => {
     const patch = () => {
-      // Core: pulsing glow
-      if (coreRef.current) {
-        const el = (coreRef.current as any)._path as SVGElement | undefined;
-        if (el) el.style.cssText = 'fill:#ff5252;fill-opacity:0.9;stroke:#ff5252;stroke-width:2;animation:poi-core-pulse 1.5s ease-in-out infinite;';
-      }
-      // Ring: spinning dashed border
-      if (ringRef.current) {
-        const el = (ringRef.current as any)._path as SVGElement | undefined;
-        if (el) el.style.cssText = 'fill:none;stroke:#ff5252;stroke-width:2.5;stroke-opacity:0.7;stroke-dasharray:8 6;animation:poi-ring-spin 3s linear infinite;';
-      }
-      // Ping: expanding radar wave
-      if (pingRef.current) {
-        const el = (pingRef.current as any)._path as SVGElement | undefined;
-        if (el) el.style.cssText = 'fill:none;stroke:#ff5252;stroke-width:3;animation:poi-ping 2s ease-out infinite;';
-      }
+      const applyClass = (ref: L.CircleMarker | null, cls: string) => {
+        if (!ref) return;
+        const el = (ref as any)._path as SVGElement | undefined;
+        if (!el) return;
+        for (const a of SVG_ATTRS) el.removeAttribute(a);
+        el.removeAttribute('fill'); el.removeAttribute('fill-opacity');
+        el.style.cssText = '';
+        el.classList.add(cls);
+      };
+      applyClass(glowRef.current, 'poi-glow');
+      applyClass(pingRef.current, 'poi-ping');
+      applyClass(ringRef.current, 'poi-ring');
+      applyClass(coreRef.current, 'poi-core');
     };
     requestAnimationFrame(() => requestAnimationFrame(patch));
   });
 
   return (
     <>
+      <CircleMarker ref={glowRef} center={center} radius={20} pathOptions={{ color: '#ff5252', fillColor: '#ff5252', fillOpacity: 0.15, weight: 1 }} />
       <CircleMarker ref={pingRef} center={center} radius={14} pathOptions={{ color: '#ff5252', fill: false, weight: 3 }} />
       <CircleMarker ref={ringRef} center={center} radius={14} pathOptions={{ color: '#ff5252', fill: false, weight: 2.5 }} />
       <CircleMarker ref={coreRef} center={center} radius={6} pathOptions={{ color: '#ff5252', fillColor: '#ff5252', fillOpacity: 0.9, weight: 2 }} />

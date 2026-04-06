@@ -62,21 +62,24 @@ npm run dev
 
 ## Build & Deploy
 
-**CRITICAL: All deployments MUST use the `private` AWS profile.** This is enforced via `AWS_PROFILE=private` in all npm scripts. Never deploy with a different profile.
+**CRITICAL: Deployments use separate AWS accounts via SSO profiles.** Dev deploys to `andregasser-lokalmatador-dev` (account 297088704837), prod to `andregasser-lokalmatador-prod` (account 517506432410). This is enforced in both npm scripts and `sst.config.ts`.
 
 ```bash
+# SSO login (required once per session, opens browser)
+aws sso login --profile andregasser-lokalmatador-dev
+
 # Install dependencies
 npm install                      # Root (SST CLI)
 cd frontend && npm install       # Frontend
 cd backend && npm install        # Backend
 
 # Deploy
-npm run deploy:dev               # Dev stage (auto-removed on deletion)
-npm run deploy                   # Production (retained on deletion)
+npm run deploy:dev               # Dev stage → andregasser-lokalmatador-dev account
+npm run deploy:prod              # Production → andregasser-lokalmatador-prod account
 
 # Remove
 npm run remove:dev               # Remove dev stage
-npm run remove                   # Remove production stage
+npm run remove:prod              # Remove production stage
 ```
 
 SST version is pinned to `4.6.9` in both root and backend `package.json`. Keep these in sync — mismatches cause deploy failures.

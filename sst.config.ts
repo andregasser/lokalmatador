@@ -9,7 +9,11 @@ export default $config({
     };
   },
   providers: {
-    aws: { profile: "private" },
+    aws: {
+      profile: input?.stage === "production"
+        ? "andregasser-lokalmatador-prod"
+        : "andregasser-lokalmatador-dev",
+    },
   },
   async run() {
     // ── DynamoDB Tables ──────────────────────────────────────────

@@ -709,8 +709,8 @@ const App: React.FC = () => {
 
 
   return (
-    <div className={`grid grid-rows-[auto_1fr] h-screen h-[100dvh] w-screen overflow-hidden ${isEmergencyActive ? 'emergency-lights' : ''} text-white leading-none`}>
-      <header className="bg-surface text-white px-4 md:px-6 py-2 flex justify-between items-center border-b border-glass-border z-[1001] shadow-2xl shrink-0 min-h-[56px] md:min-h-[64px] leading-none">
+    <div className={`h-screen h-[100dvh] w-screen overflow-hidden ${isEmergencyActive ? 'emergency-lights' : ''} text-white leading-none`}>
+      <header className="bg-surface text-white px-4 md:px-6 py-2 flex justify-between items-center border-b border-glass-border fixed top-0 left-0 right-0 z-[10000] shadow-2xl min-h-[56px] md:min-h-[64px] leading-none">
         <div className="flex items-center gap-2 md:gap-3 text-white leading-none">
           <div className="flex items-center gap-2 md:gap-3 text-white leading-none">
             <MapIcon size={18} className="text-primary md:w-5 md:h-5 text-white leading-none" />
@@ -776,7 +776,7 @@ const App: React.FC = () => {
         </nav>
       </header>
 
-      <main className="flex-1 relative bg-bg overflow-hidden text-white leading-none text-white leading-none text-white leading-none">
+      <main className="absolute top-[56px] md:top-[64px] bottom-0 left-0 right-0 bg-bg overflow-hidden text-white leading-none">
         {loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md z-[2000] text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
             <div className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin mb-5 leading-none text-white leading-none text-white leading-none text-white leading-none"></div>
@@ -785,7 +785,7 @@ const App: React.FC = () => {
         )}
 
         {mode === 'learn' && streets.length > 0 && (
-          <div className="absolute inset-0 w-full h-full z-1 touch-none text-white leading-none text-white leading-none text-white leading-none">
+          <div className="absolute inset-0 w-full h-full touch-none">
             <MapContainer key={`map-learn-${streets.length}`} center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
               <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name={t('map_osm')}>
@@ -806,16 +806,27 @@ const App: React.FC = () => {
                     </AnimatedPolyline>
                   ) : (
                     s.coordinates.map((path, idx) => (
-                      <Polyline
-                        key={`${s.id}-${idx}`} positions={path}
-                        pathOptions={{
-                          color: knownStreetIds.includes(s.id) ? "#4ade80" : "var(--accent)",
-                          weight: 4, opacity: 0.6
-                        }}
-                        eventHandlers={{ click: () => setSelectedStreetId(s.id) }} interactive={true}
-                      >
-                        <Tooltip permanent={false} className="street-tooltip text-white leading-none font-sans font-black text-white leading-none text-white leading-none">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
-                      </Polyline>
+                      <React.Fragment key={`${s.id}-${idx}`}>
+                        {/* Invisible wide touch target */}
+                        <Polyline
+                          positions={path}
+                          pathOptions={{ color: 'transparent', weight: 30, opacity: 0 }}
+                          eventHandlers={{ click: () => setSelectedStreetId(s.id) }}
+                          interactive={true}
+                        />
+                        {/* Visible street line */}
+                        <Polyline
+                          positions={path}
+                          pathOptions={{
+                            color: knownStreetIds.includes(s.id) ? "#4ade80" : "var(--accent)",
+                            weight: 4, opacity: 0.6
+                          }}
+                          eventHandlers={{ click: () => setSelectedStreetId(s.id) }}
+                          interactive={true}
+                        >
+                          <Tooltip permanent={false} className="street-tooltip text-white leading-none font-sans font-black text-white leading-none text-white leading-none">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
+                        </Polyline>
+                      </React.Fragment>
                     ))
                   )}
                 </React.Fragment>

@@ -233,18 +233,18 @@ const getRank = (totalScore: number) => {
   return [...RANKS].reverse().find(r => totalScore >= r.min) || RANKS[0];
 };
 
-const MapFocus = ({ coords }: { coords: [number, number][][] | null }) => {
+const MapFocus = ({ coords, focusKey }: { coords: [number, number][][] | null; focusKey?: string }) => {
   const map = useMap();
   useEffect(() => {
     if (coords && coords.length > 0) {
       const flatCoords = coords.flat();
       if (flatCoords.length === 1) {
-        map.setView(flatCoords[0] as any, 17, { animate: true });
+        map.setView(flatCoords[0] as L.LatLngExpression, 17, { animate: true });
       } else {
-        map.fitBounds(flatCoords as any, { padding: [100, 100], maxZoom: 17 });
+        map.fitBounds(flatCoords as L.LatLngBoundsExpression, { padding: [100, 100], maxZoom: 17 });
       }
     }
-  }, [coords, map]);
+  }, [focusKey, map]);
   return null;
 };
 
@@ -781,7 +781,7 @@ const App: React.FC = () => {
         )}
 
         {mode === 'learn' && streets.length > 0 && (
-          <div className="absolute inset-0 w-full h-full touch-none">
+          <div className="absolute inset-0 w-full h-full">
             <MapContainer key={`map-learn-${streets.length}`} center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }}>
               <LayersControl position="topright">
                 <LayersControl.BaseLayer checked name={t('map_osm')}>
@@ -828,7 +828,7 @@ const App: React.FC = () => {
                 </React.Fragment>
               ))}
               {visibleHydrants.map(h => (
-                <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#06b6d4', fillColor: '#0891b2', fillOpacity: 0.8, weight: 2 }}>
+                <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#d946ef', fillColor: '#c026d3', fillOpacity: 0.8, weight: 2 }}>
                   <Tooltip className="street-tooltip font-sans">Hydrant #{h.id}</Tooltip>
                 </CircleMarker>
               ))}
@@ -844,7 +844,7 @@ const App: React.FC = () => {
                 className="bg-glass-bg backdrop-blur-lg border border-glass-border text-white px-3 py-2 md:px-4.5 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-2 cursor-pointer shadow-2xl transition-all duration-300 font-bold text-[0.7rem] md:text-[0.85rem] hover:bg-surface hover:border-accent active:scale-95 uppercase tracking-widest"
                 onClick={() => setShowHydrants(!showHydrants)}
               >
-                {showHydrants ? <EyeOff size={16} className="text-cyan-500 md:w-5 md:h-5" /> : <Droplets size={16} className="text-cyan-500 md:w-5 md:h-5" />}
+                {showHydrants ? <EyeOff size={16} className="text-fuchsia-500 md:w-5 md:h-5" /> : <Droplets size={16} className="text-fuchsia-500 md:w-5 md:h-5" />}
                 <span className="uppercase">{showHydrants ? t('toggle_off') : t('toggle_hydrants')}</span>
               </button>
               <button 
@@ -861,7 +861,7 @@ const App: React.FC = () => {
               <div className="flex gap-3 md:gap-5 border-t border-white/10 pt-1.5 md:pt-2 w-full justify-center font-black uppercase text-[0.6rem] md:text-[0.7rem]">
                 <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#4ade80] shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span> <span>{t('legend_known')}</span></div>
                 <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> <span>{t('legend_unknown')}</span></div>
-                <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#06b6d4] shadow-[0_0_8px_rgba(6,182,212,0.5)]"></span> <span>Hydrant</span></div>
+                <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#d946ef] shadow-[0_0_8px_rgba(217,70,239,0.5)]"></span> <span>Hydrant</span></div>
                 <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#fbbf24] shadow-[0_0_20px_rgba(251,191,36,0.5)]"></span> <span>POI</span></div>
               </div>
             </div>
@@ -870,7 +870,6 @@ const App: React.FC = () => {
 
         {mode === 'compete' && (
           <div className="absolute inset-0 w-full h-full">
-            <div className="absolute inset-0 w-full h-full z-1 touch-none">
               <MapContainer key="map-compete" center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <LayersControl position="topright">
                   <LayersControl.BaseLayer checked name={t('map_stumm')}>
@@ -886,14 +885,13 @@ const App: React.FC = () => {
                   <AnimatedPoiMarker center={[currentPoi.lat, currentPoi.lon]} />
                 )}
                 {visibleHydrants.map(h => (
-                  <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#06b6d4', fillColor: '#0891b2', fillOpacity: 0.8, weight: 2 }}>
+                  <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#d946ef', fillColor: '#c026d3', fillOpacity: 0.8, weight: 2 }}>
                     <Tooltip className="street-tooltip font-sans">Hydrant #{h.id}</Tooltip>
                   </CircleMarker>
                 ))}
-                {currentStreet && !currentPoi && <MapFocus coords={currentStreet.coordinates} />}
-                {currentPoi && <MapFocus coords={[[[currentPoi.lat, currentPoi.lon]]]} />}
+                {currentStreet && !currentPoi && <MapFocus coords={currentStreet.coordinates} focusKey={currentStreet.id} />}
+                {currentPoi && <MapFocus coords={[[[currentPoi.lat, currentPoi.lon]]]} focusKey={currentPoi.id} />}
               </MapContainer>
-            </div>
 
             {showRulesModal && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[9999] animate-modal-fade px-3 md:px-4">

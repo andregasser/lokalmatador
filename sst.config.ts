@@ -10,9 +10,7 @@ export default $config({
   },
   providers: {
     aws: {
-      profile: input?.stage === "production"
-        ? "andregasser-lokalmatador-prod"
-        : "andregasser-lokalmatador-dev",
+      profile: process.env.AWS_PROFILE,
     },
   },
   async run() {
@@ -93,9 +91,26 @@ export default $config({
       link: [userDataTable],
     }, authConfig);
 
+    // ── Domain Config ───────────────────────────────────────────
+    // DNS is managed in the management account (Route 53), so dns:false + explicit cert
+    const domainMap: Record<string, { name: string; cert: string }> = {
+      dev: {
+        name: "lokalmatador-dev.andregasser.dev",
+        cert: "arn:aws:acm:us-east-1:297088704837:certificate/fc24868b-acc2-421e-8230-756b493456bd",
+      },
+      production: {
+        name: "lokalmatador.andregasser.dev",
+        cert: "arn:aws:acm:us-east-1:517506432410:certificate/9ff890de-601d-4dbc-9c6a-68b63b2b3370",
+      },
+    };
+    const domainConfig = domainMap[$app.stage]
+      ? { name: domainMap[$app.stage].name, cert: domainMap[$app.stage].cert, dns: false }
+      : undefined;
+
     // ── Frontend ─────────────────────────────────────────────────
     const site = new sst.aws.StaticSite("Frontend", {
       path: "frontend",
+      domain: domainConfig,
       build: {
         command: "npm run build",
         output: "dist",

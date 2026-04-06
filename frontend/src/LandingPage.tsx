@@ -145,7 +145,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             <span className="text-xl font-black tracking-tighter">LOKALMATADOR</span>
           </div>
           <div className="text-slate-500 text-sm font-medium">
-            &copy; {new Date().getFullYear()} Feuerwehr Bassersdorf Training Tool.
+            &copy; {new Date().getFullYear()} André Gasser
           </div>
         </div>
       </footer>

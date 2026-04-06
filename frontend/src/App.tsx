@@ -259,7 +259,7 @@ const MapResizer = () => {
   return null;
 };
 
-const MapTracker = ({ setZoom, setBounds }: { setZoom: (z: number) => void, setBounds: (b: L.LatLngBounds) => void }) => {
+const MapTracker = ({ setBounds }: { setBounds: (b: L.LatLngBounds) => void }) => {
   const map = useMap();
   const timeoutRef = useRef<number | null>(null);
 
@@ -267,23 +267,21 @@ const MapTracker = ({ setZoom, setBounds }: { setZoom: (z: number) => void, setB
     const update = () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
       timeoutRef.current = window.setTimeout(() => {
-        setZoom(map.getZoom());
         setBounds(map.getBounds());
       }, 100);
     };
     map.on('zoomend moveend', update);
-    setZoom(map.getZoom());
     setBounds(map.getBounds());
-    return () => { 
+    return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-      map.off('zoomend moveend', update); 
+      map.off('zoomend moveend', update);
     };
-  }, [map, setZoom, setBounds]);
+  }, [map, setBounds]);
   return null;
 };
 
 const LanguageSwitcher = ({ current, onChange }: { current: string, onChange: (lng: string) => void }) => (
-  <div className="flex bg-white/5 p-1 rounded-xl border border-glass-border gap-1 text-white leading-none">
+  <div className="flex bg-white/5 p-1 rounded-xl border border-glass-border gap-1">
     <button 
       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-extrabold text-[0.75rem] transition-all duration-200 cursor-pointer ${current === 'de' ? 'bg-primary shadow-lg shadow-primary-glow text-white' : 'text-text-muted hover:bg-white/5 hover:text-white'}`} 
       onClick={() => onChange('de')}
@@ -331,13 +329,13 @@ const App: React.FC = () => {
   const [knownStreetIds, setKnownStreetIds] = useState<string[]>([]);
   const [isEmergencyActive, setIsEmergencyActive] = useState(false);
   const [lastDiscoveryBonus, setLastDiscoveryBonus] = useState(false);
-  const [, setCurrentZoom] = useState(15);
+
   const [mapBounds, setMapBounds] = useState<L.LatLngBounds | null>(null);
   const [roundsPlayedInSession, setRoundsPlayedInSession] = useState(0);
   const [showLanding, setShowLanding] = useState(true);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [userTotalScore, setUserTotalScore] = useState(0);
-  const [, setLeaderboardLoading] = useState(false);
+
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -646,17 +644,17 @@ const App: React.FC = () => {
         >
           <ArrowLeft size={20} className="text-white" /> {t('back_to_home')}
         </button>
-        <div className="absolute inset-0 z-0 text-white leading-none">
-          <div className="absolute top-[-10%] right-[-5%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[radial-gradient(circle,var(--primary-glow)_0%,transparent_70%)] animate-float text-white leading-none"></div>
-          <div className="absolute bottom-[-10%] left-[-5%] w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-[radial-gradient(circle,rgba(56,189,248,0.1)_0%,transparent_70%)] animate-float-reverse text-white leading-none"></div>
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-[-10%] right-[-5%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[radial-gradient(circle,var(--primary-glow)_0%,transparent_70%)] animate-float"></div>
+          <div className="absolute bottom-[-10%] left-[-5%] w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-[radial-gradient(circle,rgba(56,189,248,0.1)_0%,transparent_70%)] animate-float-reverse"></div>
         </div>
-        <div className="relative z-10 text-center animate-login-fade px-6 text-white leading-none text-white leading-none">
-          <div className="mb-8 md:mb-10 text-white leading-none text-white leading-none">
-            <ShieldAlert size={64} className="text-primary mb-4 md:mb-5 mx-auto drop-shadow-[0_0_20px_var(--primary-glow)] md:w-20 md:h-20 text-white leading-none text-white leading-none" />
-            <h1 className="text-4xl md:text-[5rem] font-black tracking-tighter m-0 bg-gradient-to-br from-white via-white to-[#64748b] bg-clip-text text-transparent leading-tight md:leading-none leading-none leading-none">
+        <div className="relative z-10 text-center animate-login-fade px-6">
+          <div className="mb-8 md:mb-10">
+            <ShieldAlert size={64} className="text-primary mb-4 md:mb-5 mx-auto drop-shadow-[0_0_20px_var(--primary-glow)] md:w-20 md:h-20" />
+            <h1 className="text-4xl md:text-[5rem] font-black tracking-tighter m-0 bg-gradient-to-br from-white via-white to-[#64748b] bg-clip-text text-transparent leading-tight md:leading-none">
               {t('app_title')}
             </h1>
-            <p className="text-text-muted text-base md:text-[1.1rem] font-medium max-w-[400px] mx-auto mt-2 md:mt-2.5 leading-relaxed text-white leading-none text-white leading-none">
+            <p className="text-text-muted text-base md:text-[1.1rem] font-medium max-w-[400px] mx-auto mt-2 md:mt-2.5 leading-relaxed">
               {t('login_desc')}
             </p>
           </div>
@@ -699,7 +697,7 @@ const App: React.FC = () => {
               </button>
             </form>
           )}
-          <div className="mt-6 md:mt-7.5 flex items-center justify-center text-white leading-none text-white leading-none">
+          <div className="mt-6 md:mt-7.5 flex items-center justify-center">
             <LanguageSwitcher current={i18n.language} onChange={changeLanguage} />
           </div>
         </div>
@@ -709,78 +707,76 @@ const App: React.FC = () => {
 
 
   return (
-    <div className={`h-screen h-[100dvh] w-screen overflow-hidden ${isEmergencyActive ? 'emergency-lights' : ''} text-white leading-none`}>
+    <div className={`h-screen h-[100dvh] w-screen overflow-hidden text-white leading-none ${isEmergencyActive ? 'emergency-lights' : ''}`}>
       <header className="bg-surface text-white px-4 md:px-6 py-2 flex justify-between items-center border-b border-glass-border fixed top-0 left-0 right-0 z-[10000] shadow-2xl min-h-[56px] md:min-h-[64px] leading-none">
-        <div className="flex items-center gap-2 md:gap-3 text-white leading-none">
-          <div className="flex items-center gap-2 md:gap-3 text-white leading-none">
-            <MapIcon size={18} className="text-primary md:w-5 md:h-5 text-white leading-none" />
-            <div className="flex flex-col leading-tight text-white leading-none text-white leading-none text-white leading-none">
-              <span className="text-[0.8rem] md:text-[0.9rem] font-bold truncate max-w-[80px] md:max-w-none text-white leading-none font-sans uppercase tracking-tight text-white leading-none text-white leading-none text-white leading-none"><strong>{user!.displayName}</strong></span>
-              <span className="text-[0.55rem] md:text-[0.65rem] font-black uppercase px-1.5 py-0.5 rounded-[4px] tracking-wider text-white leading-none text-white leading-none text-white leading-none" style={{ backgroundColor: userRank.color + '33', color: userRank.color }}>
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
+            <MapIcon size={18} className="text-primary md:w-5 md:h-5" />
+            <div className="flex flex-col leading-tight">
+              <span className="text-[0.8rem] md:text-[0.9rem] font-bold truncate max-w-[80px] md:max-w-none font-sans uppercase tracking-tight"><strong>{user!.displayName}</strong></span>
+              <span className="text-[0.55rem] md:text-[0.65rem] font-black uppercase px-1.5 py-0.5 rounded-[4px] tracking-wider" style={{ backgroundColor: userRank.color + '33', color: userRank.color }}>
                 {userRank.title}
               </span>
             </div>
           </div>
           <div className="w-[1px] h-4 md:h-5 bg-glass-border mx-1 md:mx-2 leading-none"></div>
-          <div className="flex items-center gap-1.5 md:gap-2.5 text-text-muted leading-none text-white leading-none text-white leading-none text-white leading-none" title={`${knownStreetIds.length} von ${streets.length} Strassen bekannt`}>
-            <Compass size={14} className="md:w-4 md:h-4 text-white leading-none text-white leading-none text-white leading-none" />
-            <div className="w-12 md:w-20 h-1 md:h-1.5 bg-white/5 rounded-full overflow-hidden border border-glass-border hidden sm:block leading-none text-white leading-none text-white leading-none text-white leading-none">
+          <div className="flex items-center gap-1.5 md:gap-2.5 text-text-muted leading-none" title={`${knownStreetIds.length} von ${streets.length} Strassen bekannt`}>
+            <Compass size={14} className="md:w-4 md:h-4" />
+            <div className="w-12 md:w-20 h-1 md:h-1.5 bg-white/5 rounded-full overflow-hidden border border-glass-border hidden sm:block leading-none">
               <div className="h-full bg-gradient-to-r from-accent to-[#4ade80] transition-[width] duration-1000" style={{ width: `${completionRate}%` }}></div>
             </div>
-            <span className="text-[0.65rem] md:text-[0.75rem] font-extrabold text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{completionRate}%</span>
+            <span className="text-[0.65rem] md:text-[0.75rem] font-extrabold">{completionRate}%</span>
           </div>
-          <div className="w-[1px] h-4 md:h-5 bg-glass-border mx-1 md:mx-2 hidden sm:block text-white leading-none text-white leading-none"></div>
-          <div className="flex items-center scale-90 md:scale-100 origin-left text-white leading-none text-white leading-none">
+          <div className="w-[1px] h-4 md:h-5 bg-glass-border mx-1 md:mx-2 hidden sm:block"></div>
+          <div className="flex items-center scale-90 md:scale-100 origin-left">
             <LanguageSwitcher current={i18n.language} onChange={changeLanguage} />
           </div>
         </div>
         
-        <nav className="flex gap-1 md:gap-2 overflow-x-auto no-scrollbar ml-2 md:ml-0 text-white leading-none text-white leading-none">
+        <nav className="flex gap-1 md:gap-2 overflow-x-auto no-scrollbar ml-2 md:ml-0">
           <button 
-            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'learn' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none text-white leading-none text-white leading-none`} 
+            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'learn' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none`} 
             onClick={() => setMode('learn')}
           >
-            <BookOpen size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline leading-none uppercase tracking-widest text-white leading-none text-white leading-none">{t('nav_learn')}</span>
+            <BookOpen size={16} className="md:w-[18px] md:h-[18px] leading-none" /> <span className="hidden md:inline leading-none uppercase tracking-widest">{t('nav_learn')}</span>
           </button>
           <button 
-            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'compete' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none text-white leading-none text-white leading-none`} 
+            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'compete' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none`} 
             onClick={() => { setMode('compete'); setShowRulesModal(true); }}
           >
-            <Trophy size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline leading-none uppercase tracking-widest text-white leading-none text-white leading-none">{t('nav_compete')}</span>
+            <Trophy size={16} className="md:w-[18px] md:h-[18px] leading-none" /> <span className="hidden md:inline leading-none uppercase tracking-widest">{t('nav_compete')}</span>
           </button>
           <button 
-            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'leaderboard' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none text-white leading-none text-white leading-none`} 
+            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'leaderboard' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none`} 
             onClick={() => {
               setMode('leaderboard');
-              setLeaderboardLoading(true);
               Promise.all([getTopScores(), getMyScores()])
                 .then(([top, my]) => {
                   setLeaderboardData(top);
                   setUserTotalScore(my.totalScore);
                 })
-                .catch((err) => console.error("Failed to refresh leaderboard:", err))
-                .finally(() => setLeaderboardLoading(false));
+                .catch((err) => console.error("Failed to refresh leaderboard:", err));
             }}
           >
-            <LayoutList size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline text-white leading-none uppercase tracking-widest leading-none text-white leading-none text-white leading-none">{t('nav_leaderboard')}</span>
+            <LayoutList size={16} className="md:w-[18px] md:h-[18px] leading-none" /> <span className="hidden md:inline uppercase tracking-widest leading-none">{t('nav_leaderboard')}</span>
           </button>
           <button 
-            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'release_notes' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none text-white leading-none text-white leading-none`} 
+            className={`flex items-center gap-1.5 md:gap-2 px-2.5 py-2 md:px-4 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl transition-all duration-200 font-bold text-[0.75rem] md:text-[0.85rem] whitespace-nowrap ${mode === 'release_notes' ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-white'} leading-none`} 
             onClick={() => setMode('release_notes')}
           >
-            <History size={16} className="md:w-[18px] md:h-[18px] leading-none text-white leading-none text-white leading-none" /> <span className="hidden md:inline text-white leading-none uppercase tracking-widest leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t('nav_updates')}</span>
+            <History size={16} className="md:w-[18px] md:h-[18px] leading-none" /> <span className="hidden md:inline uppercase tracking-widest leading-none">{t('nav_updates')}</span>
           </button>
-          <button onClick={handleLogout} className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-2 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl text-red-500 hover:bg-red-500/10 transition-all text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-            <LogOut size={16} className="md:w-[18px] md:h-[18px] text-white leading-none text-white leading-none text-white leading-none text-white leading-none" />
+          <button onClick={handleLogout} className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-2 md:py-2.5 cursor-pointer rounded-lg md:rounded-xl text-red-500 hover:bg-red-500/10 transition-all">
+            <LogOut size={16} className="md:w-[18px] md:h-[18px]" />
           </button>
         </nav>
       </header>
 
-      <main className="absolute top-[56px] md:top-[64px] bottom-0 left-0 right-0 bg-bg overflow-hidden text-white leading-none">
+      <main className="absolute top-[56px] md:top-[64px] bottom-0 left-0 right-0 bg-bg overflow-hidden">
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md z-[2000] text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-            <div className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin mb-5 leading-none text-white leading-none text-white leading-none text-white leading-none"></div>
-            <p className="font-semibold text-white leading-none text-white leading-none text-white leading-none">{t('loading')}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md z-[2000]">
+            <div className="w-10 h-10 border-4 border-primary/10 border-t-primary rounded-full animate-spin mb-5 leading-none"></div>
+            <p className="font-semibold">{t('loading')}</p>
           </div>
         )}
 
@@ -793,7 +789,7 @@ const App: React.FC = () => {
                 </LayersControl.BaseLayer>
                 <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
               </LayersControl>
-              <MapResizer /><MapTracker setZoom={setCurrentZoom} setBounds={setMapBounds} />
+              <MapResizer /><MapTracker setBounds={setMapBounds} />
               {visibleStreets.map(s => (
                 <React.Fragment key={s.id}>
                   {selectedStreetId === s.id ? (
@@ -802,7 +798,7 @@ const App: React.FC = () => {
                       positions={s.coordinates}
                       eventHandlers={{ click: () => setSelectedStreetId(s.id) }}
                     >
-                      <Tooltip permanent={false} className="street-tooltip text-white leading-none font-sans font-black text-white leading-none text-white leading-none">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
+                      <Tooltip permanent={false} className="street-tooltip font-sans font-black">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
                     </AnimatedPolyline>
                   ) : (
                     s.coordinates.map((path, idx) => (
@@ -824,7 +820,7 @@ const App: React.FC = () => {
                           eventHandlers={{ click: () => setSelectedStreetId(s.id) }}
                           interactive={true}
                         >
-                          <Tooltip permanent={false} className="street-tooltip text-white leading-none font-sans font-black text-white leading-none text-white leading-none">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
+                          <Tooltip permanent={false} className="street-tooltip font-sans font-black">{s.name} {knownStreetIds.includes(s.id) ? '✅' : ''}</Tooltip>
                         </Polyline>
                       </React.Fragment>
                     ))
@@ -832,48 +828,48 @@ const App: React.FC = () => {
                 </React.Fragment>
               ))}
               {visibleHydrants.map(h => (
-                <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#38bdf8', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}>
-                  <Tooltip className="street-tooltip text-white leading-none font-sans text-white leading-none text-white leading-none text-white leading-none">Hydrant #{h.id}</Tooltip>
+                <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#06b6d4', fillColor: '#0891b2', fillOpacity: 0.8, weight: 2 }}>
+                  <Tooltip className="street-tooltip font-sans">Hydrant #{h.id}</Tooltip>
                 </CircleMarker>
               ))}
               {visiblePois.map(p => (
                 <CircleMarker key={p.id} center={[p.lat, p.lon]} radius={7} pathOptions={{ color: '#fbbf24', fillColor: '#f59e0b', fillOpacity: 0.8, weight: 2 }}>
-                  <Tooltip className="street-tooltip text-white leading-none font-sans text-white leading-none text-white leading-none text-white leading-none"><strong>{p.name}</strong><br/><span className="text-[0.65rem] opacity-80 uppercase leading-none text-white leading-none text-white leading-none">{p.category}</span></Tooltip>
+                  <Tooltip className="street-tooltip font-sans"><strong>{p.name}</strong><br/><span className="text-[0.65rem] opacity-80 uppercase leading-none">{p.category}</span></Tooltip>
                 </CircleMarker>
               ))}
             </MapContainer>
-            
-            <div className="absolute bottom-24 md:bottom-[120px] left-4 md:left-6 flex flex-col gap-2 z-[1000] text-white leading-none text-white leading-none text-white leading-none">
-              <button 
-                className="bg-glass-bg backdrop-blur-lg border border-glass-border text-white px-3 py-2 md:px-4.5 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-2 cursor-pointer shadow-2xl transition-all duration-300 font-bold text-[0.7rem] md:text-[0.85rem] hover:bg-surface hover:border-accent active:scale-95 text-white leading-none uppercase tracking-widest text-white leading-none text-white leading-none" 
+
+            <div className="absolute bottom-24 md:bottom-[120px] left-4 md:left-6 flex flex-col gap-2 z-[1000]">
+              <button
+                className="bg-glass-bg backdrop-blur-lg border border-glass-border text-white px-3 py-2 md:px-4.5 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-2 cursor-pointer shadow-2xl transition-all duration-300 font-bold text-[0.7rem] md:text-[0.85rem] hover:bg-surface hover:border-accent active:scale-95 uppercase tracking-widest"
                 onClick={() => setShowHydrants(!showHydrants)}
               >
-                {showHydrants ? <EyeOff size={16} className="text-accent md:w-5 md:h-5 text-white leading-none text-white leading-none" /> : <Droplets size={16} className="text-accent md:w-5 md:h-5 text-white leading-none text-white leading-none" />}
-                <span className="text-white leading-none uppercase text-white leading-none text-white leading-none">{showHydrants ? t('toggle_off') : t('toggle_hydrants')}</span>
+                {showHydrants ? <EyeOff size={16} className="text-cyan-500 md:w-5 md:h-5" /> : <Droplets size={16} className="text-cyan-500 md:w-5 md:h-5" />}
+                <span className="uppercase">{showHydrants ? t('toggle_off') : t('toggle_hydrants')}</span>
               </button>
               <button 
-                className="bg-glass-bg backdrop-blur-lg border border-glass-border text-white px-3 py-2 md:px-4.5 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-2 cursor-pointer shadow-2xl transition-all duration-300 font-bold text-[0.7rem] md:text-[0.85rem] hover:bg-surface hover:border-accent active:scale-95 text-white leading-none uppercase tracking-widest text-white leading-none text-white leading-none" 
+                className="bg-glass-bg backdrop-blur-lg border border-glass-border text-white px-3 py-2 md:px-4.5 md:py-2.5 rounded-lg md:rounded-xl flex items-center gap-2 cursor-pointer shadow-2xl transition-all duration-300 font-bold text-[0.7rem] md:text-[0.85rem] hover:bg-surface hover:border-accent active:scale-95 uppercase tracking-widest" 
                 onClick={() => setShowPOIs(!showPOIs)}
               >
-                {showPOIs ? <EyeOff size={16} className="text-yellow-500 md:w-5 md:h-5 text-white leading-none text-white leading-none" /> : <MapIcon size={16} className="text-yellow-500 md:w-5 md:h-5 text-white leading-none text-white leading-none" />}
-                <span className="text-white leading-none uppercase text-white leading-none text-white leading-none">{showPOIs ? t('toggle_off') : t('toggle_pois')}</span>
+                {showPOIs ? <EyeOff size={16} className="text-yellow-500 md:w-5 md:h-5" /> : <MapIcon size={16} className="text-yellow-500 md:w-5 md:h-5" />}
+                <span className="uppercase">{showPOIs ? t('toggle_off') : t('toggle_pois')}</span>
               </button>
             </div>
 
-            <div className="absolute bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto bg-glass-bg backdrop-blur-lg px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-full border border-glass-border z-[1000] shadow-2xl flex flex-col items-center gap-1.5 md:gap-2 text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-              <div className="flex items-center gap-2 text-[0.75rem] md:text-[0.9rem] text-white font-semibold text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none"><BookOpen size={14} className="md:w-[18px] md:h-[18px] text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" /> {t('learn_overlay')}</div>
-              <div className="flex gap-3 md:gap-5 border-t border-white/10 pt-1.5 md:pt-2 w-full justify-center text-white leading-none font-black uppercase text-[0.6rem] md:text-[0.7rem] text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                <div className="flex items-center gap-1 text-text-muted text-white leading-none text-white leading-none text-white leading-none"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#4ade80] shadow-[0_0_8px_rgba(74,222,128,0.5)] text-white leading-none text-white leading-none"></span> <span>{t('legend_known')}</span></div>
-                <div className="flex items-center gap-1 text-text-muted text-white leading-none text-white leading-none text-white leading-none"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(56,189,248,0.5)] text-white leading-none text-white leading-none"></span> <span>{t('legend_unknown')}</span></div>
-                <div className="flex items-center gap-1 text-text-muted text-white leading-none text-white leading-none text-white leading-none"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_rgba(56,189,248,0.5)] text-white leading-none text-white leading-none"></span> <span>Hydrant</span></div>
-                <div className="flex items-center gap-1 text-text-muted text-white leading-none text-white leading-none text-white leading-none"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#fbbf24] shadow-[0_0_20px_rgba(251,191,36,0.5)] text-white leading-none text-white leading-none"></span> <span>POI</span></div>
+            <div className="absolute bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto bg-glass-bg backdrop-blur-lg px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-full border border-glass-border z-[1000] shadow-2xl flex flex-col items-center gap-1.5 md:gap-2">
+              <div className="flex items-center gap-2 text-[0.75rem] md:text-[0.9rem] text-white font-semibold"><BookOpen size={14} className="md:w-[18px] md:h-[18px]" /> {t('learn_overlay')}</div>
+              <div className="flex gap-3 md:gap-5 border-t border-white/10 pt-1.5 md:pt-2 w-full justify-center font-black uppercase text-[0.6rem] md:text-[0.7rem]">
+                <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#4ade80] shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span> <span>{t('legend_known')}</span></div>
+                <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> <span>{t('legend_unknown')}</span></div>
+                <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#06b6d4] shadow-[0_0_8px_rgba(6,182,212,0.5)]"></span> <span>Hydrant</span></div>
+                <div className="flex items-center gap-1 text-text-muted"><span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[#fbbf24] shadow-[0_0_20px_rgba(251,191,36,0.5)]"></span> <span>POI</span></div>
               </div>
             </div>
           </div>
         )}
 
         {mode === 'compete' && (
-          <div className="absolute inset-0 w-full h-full text-white leading-none">
+          <div className="absolute inset-0 w-full h-full">
             <div className="absolute inset-0 w-full h-full z-1 touch-none">
               <MapContainer key="map-compete" center={BASSERSDORF_CENTER} zoom={15} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <LayersControl position="topright">
@@ -882,7 +878,7 @@ const App: React.FC = () => {
                   </LayersControl.BaseLayer>
                   <LayersControl.BaseLayer name={t('map_sat')}><TileLayer url="https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg" attribution='&copy; swisstopo' maxZoom={22} /></LayersControl.BaseLayer>
                 </LayersControl>
-                <MapResizer /><MapTracker setZoom={setCurrentZoom} setBounds={setMapBounds} />
+                <MapResizer /><MapTracker setBounds={setMapBounds} />
                 {currentStreet && !currentPoi && (
                   <AnimatedPolyline positions={currentStreet.coordinates} />
                 )}
@@ -890,7 +886,7 @@ const App: React.FC = () => {
                   <AnimatedPoiMarker center={[currentPoi.lat, currentPoi.lon]} />
                 )}
                 {visibleHydrants.map(h => (
-                  <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#38bdf8', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}>
+                  <CircleMarker key={h.id} center={[h.lat, h.lon]} radius={6} pathOptions={{ color: '#06b6d4', fillColor: '#0891b2', fillOpacity: 0.8, weight: 2 }}>
                     <Tooltip className="street-tooltip font-sans">Hydrant #{h.id}</Tooltip>
                   </CircleMarker>
                 ))}
@@ -941,7 +937,7 @@ const App: React.FC = () => {
 
             {currentStreet && !showRulesModal && (
               <>
-                <div className="flex justify-between absolute top-3 md:top-5 inset-x-3 md:inset-x-5 z-[1000] gap-2 text-white leading-none">
+                <div className="flex justify-between absolute top-3 md:top-5 inset-x-3 md:inset-x-5 z-[1000] gap-2">
                   <div className="bg-glass-bg backdrop-blur-lg px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-glass-border shadow-2xl font-black flex items-center gap-1.5 text-[0.7rem] md:text-base"><Trophy size={14} className="md:w-4 md:h-4" /> {t('round')}: {totalQuestions}/10</div>
                   <div className={`bg-glass-bg backdrop-blur-lg px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-glass-border shadow-2xl font-black flex items-center gap-1.5 text-[0.7rem] md:text-base ${streak >= 3 ? 'animate-pulse text-primary border-primary/30' : ''}`}>
                     {score.toLocaleString()} <span className="hidden xs:inline">PTS</span>
@@ -960,7 +956,7 @@ const App: React.FC = () => {
             )}
 
             {currentStreet && !showRulesModal && (
-              <div className="absolute bottom-4 md:bottom-[30px] left-1/2 -translate-x-1/2 w-[94%] md:w-[90%] max-w-[600px] bg-glass-bg backdrop-blur-[24px] p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl z-[1000] text-white leading-none">
+              <div className="absolute bottom-4 md:bottom-[30px] left-1/2 -translate-x-1/2 w-[94%] md:w-[90%] max-w-[600px] bg-glass-bg backdrop-blur-[24px] p-4 md:p-6 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl z-[1000]">
                 {feedback ? (
                   <div className="flex flex-col items-center gap-3 md:gap-[15px]">
                     <div className={`flex flex-col items-center gap-2 md:gap-[15px] ${feedback === 'correct' ? 'text-[#4ade80]' : 'text-primary'}`}>
@@ -1004,41 +1000,41 @@ const App: React.FC = () => {
 
         {/* OVERLAYS */}
         {(mode === 'leaderboard' || mode === 'release_notes') && (
-          <div className="absolute inset-0 overflow-y-auto pb-[50px] z-[3000] bg-bg text-white leading-none text-white leading-none text-white leading-none">
+          <div className="absolute inset-0 overflow-y-auto pb-[50px] z-[3000] bg-bg">
             {mode === 'leaderboard' && (
-              <div className="py-8 md:py-12 px-4 md:px-6 max-w-[900px] mx-auto text-center text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
-                <div className="flex items-center justify-center gap-3 md:gap-4 mb-8 md:mb-10 text-white leading-none text-white leading-none text-white leading-none text-white leading-none"><Trophy size={28} className="text-accent md:w-8 md:h-8 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" /> <h2 className="text-[1.8rem] md:text-[2.5rem] font-black tracking-tight leading-none uppercase text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">{t('leaderboard')}</h2></div>
+              <div className="py-8 md:py-12 px-4 md:px-6 max-w-[900px] mx-auto text-center">
+                <div className="flex items-center justify-center gap-3 md:gap-4 mb-8 md:mb-10"><Trophy size={28} className="text-accent md:w-8 md:h-8" /> <h2 className="text-[1.8rem] md:text-[2.5rem] font-black tracking-tight leading-none uppercase">{t('leaderboard')}</h2></div>
                 
-                <div className="flex justify-center items-end gap-2 md:gap-4 mb-12 md:mb-16 pt-5 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none">
+                <div className="flex justify-center items-end gap-2 md:gap-4 mb-12 md:mb-16 pt-5">
                   {topThree.map((entry, i) => {
                     const rank = getRank(entry.score);
                     const isWinner = i === 0;
                     return (
-                      <div key={i} className={`bg-surface border border-glass-border rounded-2xl md:rounded-[28px] p-3 md:p-6 flex flex-col items-center gap-1.5 md:gap-3 w-[100px] sm:w-[140px] md:w-[190px] relative transition-all duration-300 shadow-2xl ${isWinner ? 'order-2 scale-110 md:scale-125 border-yellow-500/40 bg-gradient-to-b from-[#1e293b] to-[#0f172a] z-[2] mb-4' : i === 1 ? 'order-1' : 'order-3'} text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none`}>
-                        <div className={`w-8 h-8 md:w-14 md:h-14 rounded-full flex justify-center items-center mb-1 ${isWinner ? 'bg-[#fbbf24] shadow-[0_0_20px_rgba(251,191,36,0.5)]' : i === 1 ? 'bg-[#cbd5e1]' : 'bg-[#d97706]'} text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none`}>
-                          <Medal size={isWinner ? 20 : 16} className="md:w-6 md:h-6 text-white leading-none text-white leading-none text-white leading-none text-white leading-none text-white leading-none" color="#0f172a" />
+                      <div key={i} className={`bg-surface border border-glass-border rounded-2xl md:rounded-[28px] p-3 md:p-6 flex flex-col items-center gap-1.5 md:gap-3 w-[100px] sm:w-[140px] md:w-[190px] relative transition-all duration-300 shadow-2xl ${isWinner ? 'order-2 scale-110 md:scale-125 border-yellow-500/40 bg-gradient-to-b from-[#1e293b] to-[#0f172a] z-[2] mb-4' : i === 1 ? 'order-1' : 'order-3'}`}>
+                        <div className={`w-8 h-8 md:w-14 md:h-14 rounded-full flex justify-center items-center mb-1 ${isWinner ? 'bg-[#fbbf24] shadow-[0_0_20px_rgba(251,191,36,0.5)]' : i === 1 ? 'bg-[#cbd5e1]' : 'bg-[#d97706]'}`}>
+                          <Medal size={isWinner ? 20 : 16} className="md:w-6 md:h-6" color="#0f172a" />
                         </div>
-                        <span className="font-black text-[0.7rem] md:text-[1.2rem] text-white truncate w-full px-1 text-white leading-none text-white leading-none text-white leading-none text-white leading-none font-sans uppercase tracking-tight text-white leading-none">{entry.username}</span>
-                        <span className="text-[0.5rem] md:text-[0.7rem] font-black uppercase text-white leading-none text-white leading-none text-white leading-none text-white leading-none font-sans tracking-widest text-white leading-none" style={{ color: rank.color }}>{rank.title}</span>
-                        <span className="text-[0.9rem] md:text-[1.4rem] font-black text-accent leading-none mt-1 text-white leading-none text-white leading-none text-white leading-none text-white leading-none font-sans tracking-tighter tabular-nums text-white leading-none">{entry.score.toLocaleString()}</span>
+                        <span className="font-black text-[0.7rem] md:text-[1.2rem] text-white truncate w-full px-1 font-sans uppercase tracking-tight">{entry.username}</span>
+                        <span className="text-[0.5rem] md:text-[0.7rem] font-black uppercase font-sans tracking-widest" style={{ color: rank.color }}>{rank.title}</span>
+                        <span className="text-[0.9rem] md:text-[1.4rem] font-black text-accent leading-none mt-1 font-sans tracking-tighter tabular-nums">{entry.score.toLocaleString()}</span>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="bg-surface rounded-2xl md:rounded-[32px] p-2 md:p-4 border border-glass-border mb-8 md:mb-12 overflow-hidden text-white leading-none text-white leading-none">
-                  <div className="overflow-x-auto text-white leading-none text-white leading-none">
-                    <table className="w-full border-collapse min-w-[400px] text-white leading-none text-white leading-none">
-                      <thead><tr><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left text-white leading-none text-white leading-none font-sans tracking-widest text-white leading-none">{t('rank')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left text-white leading-none text-white leading-none font-sans tracking-widest text-white leading-none">{t('name')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left text-white leading-none text-white leading-none font-sans tracking-widest text-white leading-none">{t('points')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left hidden sm:table-cell text-white leading-none text-white leading-none font-sans tracking-widest text-white leading-none">{t('date')}</th></tr></thead>
+                <div className="bg-surface rounded-2xl md:rounded-[32px] p-2 md:p-4 border border-glass-border mb-8 md:mb-12 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse min-w-[400px]">
+                      <thead><tr><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left font-sans tracking-widest">{t('rank')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left font-sans tracking-widest">{t('name')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left font-sans tracking-widest">{t('points')}</th><th className="p-3 md:p-4 px-4 md:px-5 text-text-muted text-[0.6rem] md:text-[0.7rem] uppercase text-left hidden sm:table-cell font-sans tracking-widest">{t('date')}</th></tr></thead>
                       <tbody>
                         {restOfList.map((entry, i) => {
                           const rank = getRank(entry.score);
                           return (
-                            <tr key={i} className={`border-t border-white/[0.05] ${entry.userId === user?.userId ? 'bg-accent/10 text-accent font-black' : ''} text-white leading-none text-white leading-none`}>
-                              <td className="p-3 md:p-5 text-[0.8rem] md:text-base text-white leading-none text-white leading-none font-sans font-black tabular-nums text-white leading-none">#{i + 4}</td>
-                              <td className="p-3 md:p-5 text-white leading-none text-white leading-none"><div className="flex flex-col gap-0.5 text-white leading-none text-white leading-none"><span className="text-[0.85rem] md:text-[1rem] text-white leading-none text-white leading-none font-sans font-bold uppercase tracking-tight text-white leading-none">{entry.username}</span><span className="text-[0.55rem] md:text-[0.7rem] font-black uppercase text-white leading-none text-white leading-none font-sans tracking-widest text-white leading-none" style={{ color: rank.color }}>{rank.title}</span></div></td>
-                              <td className="p-3 md:p-5 font-black text-primary text-[0.9rem] md:text-[1.1rem] text-white leading-none text-white leading-none font-sans tabular-nums text-white leading-none">{entry.score.toLocaleString()}</td>
-                              <td className="p-3 md:p-5 text-[0.7rem] md:text-[0.85rem] text-text-muted hidden sm:table-cell text-white leading-none text-white leading-none font-sans tracking-tight text-white leading-none">{entry.date}</td>
+                            <tr key={i} className={`border-t border-white/[0.05] ${entry.userId === user?.userId ? 'bg-accent/10 text-accent font-black' : ''}`}>
+                              <td className="p-3 md:p-5 text-[0.8rem] md:text-base font-sans font-black tabular-nums">#{i + 4}</td>
+                              <td className="p-3 md:p-5"><div className="flex flex-col gap-0.5"><span className="text-[0.85rem] md:text-[1rem] font-sans font-bold uppercase tracking-tight">{entry.username}</span><span className="text-[0.55rem] md:text-[0.7rem] font-black uppercase font-sans tracking-widest" style={{ color: rank.color }}>{rank.title}</span></div></td>
+                              <td className="p-3 md:p-5 font-black text-primary text-[0.9rem] md:text-[1.1rem] font-sans tabular-nums">{entry.score.toLocaleString()}</td>
+                              <td className="p-3 md:p-5 text-[0.7rem] md:text-[0.85rem] text-text-muted hidden sm:table-cell font-sans tracking-tight">{entry.date}</td>
                             </tr>
                           );
                         })}
@@ -1047,61 +1043,61 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 md:gap-6 bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] mb-8 border border-glass-border justify-items-center text-white leading-none text-white leading-none">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 md:gap-6 bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] mb-8 border border-glass-border justify-items-center">
                   {ACHIEVEMENTS.map(ach => {
                     const isUnlocked = unlockedAchievements.includes(ach.id);
                     return (
-                      <div key={ach.id} className={`flex flex-col items-center gap-2 md:gap-3 w-full transition-all duration-300 ${isUnlocked ? 'filter-none opacity-100' : 'grayscale opacity-20'} text-white leading-none text-white leading-none`} title={t(ach.desc)}>
-                        <div className={`p-2.5 md:p-3 rounded-full bg-white/[0.03] border border-white/[0.05] ${isUnlocked ? 'shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''} text-white leading-none text-white leading-none`}>
-                          <ach.icon size={20} className="md:w-6 md:h-6 text-white leading-none text-white leading-none" color={isUnlocked ? ach.color : '#475569'} />
+                      <div key={ach.id} className={`flex flex-col items-center gap-2 md:gap-3 w-full transition-all duration-300 ${isUnlocked ? 'filter-none opacity-100' : 'grayscale opacity-20'}`} title={t(ach.desc)}>
+                        <div className={`p-2.5 md:p-3 rounded-full bg-white/[0.03] border border-white/[0.05] ${isUnlocked ? 'shadow-[0_0_15px_rgba(255,255,255,0.1)]' : ''}`}>
+                          <ach.icon size={20} className="md:w-6 md:h-6" color={isUnlocked ? ach.color : '#475569'} />
                         </div>
-                        <span className={`text-[0.55rem] md:text-[0.7rem] font-extrabold uppercase text-center leading-tight ${isUnlocked ? 'text-white' : 'text-text-muted'} text-white leading-none text-white leading-none font-sans tracking-widest leading-none text-white leading-none`}>{t(ach.title)}</span>
+                        <span className={`text-[0.55rem] md:text-[0.7rem] font-extrabold uppercase text-center leading-tight ${isUnlocked ? 'text-white' : 'text-text-muted'} font-sans tracking-widest leading-none`}>{t(ach.title)}</span>
                       </div>
                     );
                   })}
                 </div>                
-                <button onClick={() => setMode('learn')} className="mt-4 md:mt-8 w-full sm:w-auto bg-transparent border border-glass-border text-text-muted px-6 py-3 rounded-xl cursor-pointer font-bold text-[0.9rem] hover:bg-white/5 hover:text-white active:scale-95 transition-all uppercase tracking-widest text-white leading-none text-white leading-none font-sans">{t('back_to_learn')}</button>
+                <button onClick={() => setMode('learn')} className="mt-4 md:mt-8 w-full sm:w-auto bg-transparent border border-glass-border text-text-muted px-6 py-3 rounded-xl cursor-pointer font-bold text-[0.9rem] hover:bg-white/5 hover:text-white active:scale-95 transition-all uppercase tracking-widest font-sans">{t('back_to_learn')}</button>
               </div>
             )}
 
             {mode === 'release_notes' && (
               <div className="py-8 md:py-12 px-4 md:px-6 max-w-[900px] mx-auto text-white text-center leading-none">
-                <div className="flex items-center justify-center gap-3 md:gap-4 mb-8 md:mb-10 text-white leading-none">
-                  <History size={28} className="text-primary md:w-8 md:h-8 text-white leading-none" /> 
-                  <h2 className="text-[1.8rem] md:text-[2.5rem] font-black tracking-tight leading-none uppercase text-white leading-none">Release Notes</h2>
+                <div className="flex items-center justify-center gap-3 md:gap-4 mb-8 md:mb-10">
+                  <History size={28} className="text-primary md:w-8 md:h-8" /> 
+                  <h2 className="text-[1.8rem] md:text-[2.5rem] font-black tracking-tight leading-none uppercase">Release Notes</h2>
                 </div>
                 
-                <div className="flex flex-col gap-6 md:gap-8 text-left text-white leading-none">
+                <div className="flex flex-col gap-6 md:gap-8 text-left">
                   {/* v2.1.0 */}
                   <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl leading-none">
-                    <div className="flex justify-between items-start mb-4 leading-none text-white leading-none">
-                      <div className="bg-primary text-white px-3.5 py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] uppercase tracking-wider leading-none text-white leading-none">v2.1.0</div>
-                      <span className="text-text-muted text-[0.65rem] md:text-xs font-bold uppercase tracking-widest leading-none text-white leading-none">March 18, 2026</span>
+                    <div className="flex justify-between items-start mb-4 leading-none">
+                      <div className="bg-primary text-white px-3.5 py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] uppercase tracking-wider leading-none">v2.1.0</div>
+                      <span className="text-text-muted text-[0.65rem] md:text-xs font-bold uppercase tracking-widest leading-none">March 18, 2026</span>
                     </div>
-                    <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 uppercase tracking-tight leading-tight text-white leading-none text-white leading-none">POIs & Enhanced Training</h3>
-                    <ul className="p-0 list-none flex flex-col gap-3 mt-4 text-white leading-none text-white leading-none text-white leading-none">
-                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none text-white leading-none">🍴 **POIs Integrated**: Restaurants, shops, and public buildings are now on the map.</li>
-                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none text-white leading-none">🎯 **POI Quiz**: Competition mode now includes questions about local points of interest.</li>
-                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none text-white leading-none">🔘 **Overlay Toggles**: Improved mobile-optimized toggles for hydrants and POIs.</li>
+                    <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 uppercase tracking-tight leading-tight">POIs & Enhanced Training</h3>
+                    <ul className="p-0 list-none flex flex-col gap-3 mt-4">
+                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🍴 **POIs Integrated**: Restaurants, shops, and public buildings are now on the map.</li>
+                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🎯 **POI Quiz**: Competition mode now includes questions about local points of interest.</li>
+                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🔘 **Overlay Toggles**: Improved mobile-optimized toggles for hydrants and POIs.</li>
                     </ul>
                   </div>
 
                   {/* v2.0.0 */}
-                  <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl leading-none text-white leading-none">
-                    <div className="flex justify-between items-start mb-4 leading-none text-white leading-none text-white leading-none">
-                      <div className="bg-primary text-white px-3.5 py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] uppercase tracking-wider leading-none text-white leading-none text-white leading-none">v2.0.0</div>
-                      <span className="text-text-muted text-[0.65rem] md:text-xs font-bold uppercase tracking-widest leading-none text-white leading-none text-white leading-none">March 17, 2026</span>
+                  <div className="bg-surface p-6 md:p-10 rounded-2xl md:rounded-[32px] border border-glass-border shadow-2xl leading-none">
+                    <div className="flex justify-between items-start mb-4 leading-none">
+                      <div className="bg-primary text-white px-3.5 py-1.5 rounded-lg font-black text-[0.65rem] md:text-[0.75rem] uppercase tracking-wider leading-none">v2.0.0</div>
+                      <span className="text-text-muted text-[0.65rem] md:text-xs font-bold uppercase tracking-widest leading-none">March 17, 2026</span>
                     </div>
-                    <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 uppercase tracking-tight leading-tight text-white leading-none text-white leading-none">Mobile-First & UI Overhaul</h3>
-                    <ul className="p-0 list-none flex flex-col gap-3 mt-4 text-white leading-none text-white leading-none text-white leading-none">
-                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none text-white leading-none">📱 **Mobile-First**: Complete interface overhaul for perfect usage on smartphones.</li>
-                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none text-white leading-none">🎨 **Tailwind CSS**: Refactored to Tailwind CSS v4 for a modern and fast UI.</li>
-                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic text-white leading-none text-white leading-none">🏠 **Landing Page**: New informative home page explaining the mission.</li>
+                    <h3 className="mt-0 text-white text-[1.3rem] md:text-[1.6rem] font-black mb-4 uppercase tracking-tight leading-tight">Mobile-First & UI Overhaul</h3>
+                    <ul className="p-0 list-none flex flex-col gap-3 mt-4">
+                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">📱 **Mobile-First**: Complete interface overhaul for perfect usage on smartphones.</li>
+                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🎨 **Tailwind CSS**: Refactored to Tailwind CSS v4 for a modern and fast UI.</li>
+                      <li className="relative pl-6 md:pl-7 leading-normal text-text-muted text-[0.85rem] md:text-[0.95rem] before:content-['→'] before:absolute before:left-0 before:text-accent before:font-black italic">🏠 **Landing Page**: New informative home page explaining the mission.</li>
                     </ul>
                   </div>
                 </div>
                 
-                <button onClick={() => setMode('learn')} className="mt-8 md:mt-12 w-full sm:w-auto bg-transparent border border-glass-border text-text-muted px-6 py-3 rounded-xl cursor-pointer font-bold text-[0.9rem] hover:bg-white/5 hover:text-white active:scale-95 transition-all uppercase tracking-widest text-white leading-none text-white leading-none font-sans uppercase">{t('back_to_learn')}</button>
+                <button onClick={() => setMode('learn')} className="mt-8 md:mt-12 w-full sm:w-auto bg-transparent border border-glass-border text-text-muted px-6 py-3 rounded-xl cursor-pointer font-bold text-[0.9rem] hover:bg-white/5 hover:text-white active:scale-95 transition-all uppercase tracking-widest font-sans uppercase">{t('back_to_learn')}</button>
               </div>
             )}
           </div>

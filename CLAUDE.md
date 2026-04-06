@@ -4,30 +4,82 @@ Gamified street-knowledge training app for the Bassersdorf fire department (Feue
 
 ## Architecture
 
-- **Frontend-only SPA** — no backend, all logic is client-side
-- React 19 + TypeScript, Vite 8, Tailwind CSS v4
-- Leaflet + react-leaflet for maps, Overpass API (OpenStreetMap) for data
+- **Fullstack SPA** — React frontend + serverless AWS backend
+- Frontend: React 19 + TypeScript, Vite 8, Tailwind CSS v4
+- Backend: SST v4 (Ion), AWS Lambda (Node.js), DynamoDB, Cognito, API Gateway v2
+- Maps: Leaflet + react-leaflet, Overpass API (OpenStreetMap) for geodata
 - i18next for translations (DE/EN, fallback: DE)
-- localStorage for persistence (user, leaderboard, achievements, known streets)
-- SST on AWS (S3 + CloudFront) for hosting
+- Auth: AWS Cognito (email/password, SRP protocol)
+- Data persistence: DynamoDB (leaderboard scores, user achievements, known streets)
+- Hosting: S3 + CloudFront via SST StaticSite
 
 ### Project Structure
 
 ```
 /
-  CLAUDE.md              # This file
-  sst.config.ts          # SST infrastructure config (AWS S3 + CloudFront)
+  CLAUDE.md              # This file — project overview
+  sst.config.ts          # SST infrastructure (DynamoDB, Cognito, API GW, Lambda, CloudFront)
+  package.json           # Root — SST CLI, deploy scripts
   frontend/
+    CLAUDE.md            # Frontend architecture details
     package.json
     vite.config.ts
     src/
       main.tsx           # Entry point
-      App.tsx            # Main app (learn, compete, leaderboard, release notes)
+      App.tsx            # Main app (auth, learn, compete, leaderboard, release notes)
       LandingPage.tsx    # Landing page
+      auth.ts            # Cognito auth wrapper (signUp, signIn, confirm, signOut, getSession)
+      api.ts             # API client (leaderboard, userdata)
       osmService.ts      # Overpass API service (streets, hydrants, POIs)
       i18n.ts            # Translations (DE/EN)
       index.css          # Global styles, Tailwind @theme, custom animations
+  backend/
+    CLAUDE.md            # Backend architecture details
+    package.json
+    src/
+      lib/
+        dynamo.ts        # DynamoDB DocumentClient singleton
+        auth.ts          # Extract userId + username from JWT claims
+        response.ts      # HTTP JSON response helpers
+      leaderboard/
+        post.ts          # POST /leaderboard — submit score
+        getTop.ts        # GET /leaderboard/top — top 10
+        getMe.ts         # GET /leaderboard/me — own scores + total
+      userdata/
+        get.ts           # GET /userdata — load achievements + streets
+        put.ts           # PUT /userdata — save achievements + streets
 ```
+
+## Development
+
+```bash
+# Frontend (Vite dev server)
+cd frontend && npm install && npm run dev
+
+# Backend (SST dev mode — deploys live to AWS, hot-reloads Lambdas)
+npm run dev
+```
+
+## Build & Deploy
+
+**CRITICAL: All deployments MUST use the `private` AWS profile.** This is enforced via `AWS_PROFILE=private` in all npm scripts. Never deploy with a different profile.
+
+```bash
+# Install dependencies
+npm install                      # Root (SST CLI)
+cd frontend && npm install       # Frontend
+cd backend && npm install        # Backend
+
+# Deploy
+npm run deploy:dev               # Dev stage (auto-removed on deletion)
+npm run deploy                   # Production (retained on deletion)
+
+# Remove
+npm run remove:dev               # Remove dev stage
+npm run remove                   # Remove production stage
+```
+
+SST version is pinned to `4.6.9` in both root and backend `package.json`. Keep these in sync — mismatches cause deploy failures.
 
 ## Design Principles
 
@@ -45,27 +97,6 @@ Gamified street-knowledge training app for the Bassersdorf fire department (Feue
 - Typography: Inter, font-black headings, uppercase + tracking-widest labels
 - Animations: subtle CSS animations (pulse, float, fade-in), not JS-driven
 
-## Development
-
-```bash
-cd frontend
-npm install
-npm run dev          # Vite dev server
-npm run build        # tsc -b && vite build
-npm run preview      # Preview production build
-npm run lint         # ESLint
-```
-
-## Deployment (AWS via SST)
-
-```bash
-npx sst deploy --stage dev           # Dev stage (auto-removed on deletion)
-npx sst deploy --stage production    # Production (retained on deletion)
-```
-
-- Build output: `frontend/dist`
-- No secrets or API keys needed (Overpass API is public)
-
 ## Code Conventions
 
 - Code, comments, variable names: **English**
@@ -74,8 +105,8 @@ npx sst deploy --stage production    # Production (retained on deletion)
 
 ## Don'ts
 
-- Don't add a backend unless explicitly requested
-- Don't introduce additional state management libraries (hooks only)
+- Don't introduce additional state management libraries (React hooks only)
 - Don't break mobile responsiveness
 - Don't add npm dependencies without discussing first
 - Don't hardcode DE/EN strings — always use i18n keys
+- Don't deploy with any AWS profile other than `private`

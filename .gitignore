@@ -41,6 +41,7 @@ pnpm-debug.log*
 .build/
 cdk.out/
 .env.sst
+**/sst-env.d.ts
 
 # Misc
 .cache/
